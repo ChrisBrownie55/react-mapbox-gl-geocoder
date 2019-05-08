@@ -1,185 +1,4486 @@
+import url from 'url';
+import http from 'http';
+import https from 'https';
+import querystring from 'querystring';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-};
-
-var classCallCheck = function (instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-};
-
-var createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
-
-var _extends = Object.assign || function (target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i];
-
-    for (var key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        target[key] = source[key];
-      }
-    }
-  }
-
-  return target;
-};
-
-var inherits = function (subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-};
-
-var possibleConstructorReturn = function (self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (typeof call === "object" || typeof call === "function") ? call : self;
-};
-
-var toConsumableArray = function (arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-    return arr2;
-  } else {
-    return Array.from(arr);
-  }
-};
-
-var invariant = require('../vendor/invariant');
-var constants = require('./constants');
-var client = require('./client');
-var getUser = require('./get_user');
-
-/**
- * Services all have the same constructor pattern: you initialize them
- * with an access token and options, and they validate those arguments
- * in a predictable way. This is a constructor-generator that makes
- * it possible to require each service's API individually.
+/*
+ * Copyright 2013-2015, Facebook, Inc.
+ * All rights reserved.
  *
- * @private
- * @param {string} name the name of the Mapbox API this class will access:
- * this is set to the name of the function so it will show up in tracebacks
- * @returns {Function} constructor function
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
  */
-function makeService(name) {
 
-  function service(accessToken, options) {
-    this.name = name;
+/*
+ * Use invariant() to assert state which your program assumes to be true.
+ *
+ * Provide sprintf-style format (only %s is supported) and arguments
+ * to provide information about what broke and what you were
+ * expecting.
+ *
+ * The invariant message will be stripped in production, but the invariant
+ * will remain to ensure logic does not differ in production.
+ */
 
-    invariant(typeof accessToken === 'string', 'accessToken required to instantiate Mapbox client');
+var NODE_ENV = process.env.NODE_ENV;
 
-    var endpoint = constants.DEFAULT_ENDPOINT;
-
-    if (options !== undefined) {
-      invariant((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
-      if (options.endpoint) {
-        invariant(typeof options.endpoint === 'string', 'endpoint must be a string');
-        endpoint = options.endpoint;
-      }
-      if (options.account) {
-        invariant(typeof options.account === 'string', 'account must be a string');
-        this.owner = options.account;
-      }
+var invariant = function invariant(condition, format, a, b, c, d, e, f) {
+  if (NODE_ENV !== 'production') {
+    if (format === undefined) {
+      throw new Error('invariant requires an error message argument');
     }
-
-    this.client = client({
-      endpoint: endpoint,
-      accessToken: accessToken
-    });
-
-    this.accessToken = accessToken;
-    this.endpoint = endpoint;
-    this.owner = this.owner || getUser(accessToken);
-    invariant(!!this.owner, 'could not determine account from provided accessToken');
   }
 
-  return service;
+  if (!condition) {
+    var error;
+    if (format === undefined) {
+      error = new Error('Minified exception occurred; use the non-minified dev environment ' + 'for the full error message and additional helpful warnings.');
+    } else {
+      var args = [a, b, c, d, e, f];
+      var argIndex = 0;
+      error = new Error(format.replace(/%s/g, function () {
+        return args[argIndex++];
+      }));
+      error.name = 'Invariant Violation';
+    }
+
+    error.framesToPop = 1; // we don't care about invariant's own frame
+    throw error;
+  }
+};
+
+var invariant_1 = invariant;
+
+var DEFAULT_ENDPOINT = 'https://api.mapbox.com';
+
+var constants = {
+	DEFAULT_ENDPOINT: DEFAULT_ENDPOINT
+};
+
+var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+function commonjsRequire () {
+	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
 }
 
-module.exports = makeService;
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
 
-var makeService$1 = /*#__PURE__*/Object.freeze({
+var es6Promise = createCommonjsModule(function (module, exports) {
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/*!
+ * @overview es6-promise - a tiny implementation of Promises/A+.
+ * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
+ * @license   Licensed under MIT license
+ *            See https://raw.githubusercontent.com/stefanpenner/es6-promise/master/LICENSE
+ * @version   v4.2.6+9869a4bc
+ */
+
+(function (global, factory) {
+  (_typeof(exports)) === 'object' && 'object' !== 'undefined' ? module.exports = factory() : global.ES6Promise = factory();
+})(commonjsGlobal, function () {
+
+  function objectOrFunction(x) {
+    var type = typeof x === 'undefined' ? 'undefined' : _typeof(x);
+    return x !== null && (type === 'object' || type === 'function');
+  }
+
+  function isFunction(x) {
+    return typeof x === 'function';
+  }
+
+  var _isArray = void 0;
+  if (Array.isArray) {
+    _isArray = Array.isArray;
+  } else {
+    _isArray = function _isArray(x) {
+      return Object.prototype.toString.call(x) === '[object Array]';
+    };
+  }
+
+  var isArray = _isArray;
+
+  var len = 0;
+  var vertxNext = void 0;
+  var customSchedulerFn = void 0;
+
+  var asap = function asap(callback, arg) {
+    queue[len] = callback;
+    queue[len + 1] = arg;
+    len += 2;
+    if (len === 2) {
+      // If len is 2, that means that we need to schedule an async flush.
+      // If additional callbacks are queued before the queue is flushed, they
+      // will be processed by this flush that we are scheduling.
+      if (customSchedulerFn) {
+        customSchedulerFn(flush);
+      } else {
+        scheduleFlush();
+      }
+    }
+  };
+
+  function setScheduler(scheduleFn) {
+    customSchedulerFn = scheduleFn;
+  }
+
+  function setAsap(asapFn) {
+    asap = asapFn;
+  }
+
+  var browserWindow = typeof window !== 'undefined' ? window : undefined;
+  var browserGlobal = browserWindow || {};
+  var BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
+  var isNode = typeof self === 'undefined' && typeof process !== 'undefined' && {}.toString.call(process) === '[object process]';
+
+  // test for web worker but not in IE10
+  var isWorker = typeof Uint8ClampedArray !== 'undefined' && typeof importScripts !== 'undefined' && typeof MessageChannel !== 'undefined';
+
+  // node
+  function useNextTick() {
+    // node version 0.10.x displays a deprecation warning when nextTick is used recursively
+    // see https://github.com/cujojs/when/issues/410 for details
+    return function () {
+      return process.nextTick(flush);
+    };
+  }
+
+  // vertx
+  function useVertxTimer() {
+    if (typeof vertxNext !== 'undefined') {
+      return function () {
+        vertxNext(flush);
+      };
+    }
+
+    return useSetTimeout();
+  }
+
+  function useMutationObserver() {
+    var iterations = 0;
+    var observer = new BrowserMutationObserver(flush);
+    var node = document.createTextNode('');
+    observer.observe(node, { characterData: true });
+
+    return function () {
+      node.data = iterations = ++iterations % 2;
+    };
+  }
+
+  // web worker
+  function useMessageChannel() {
+    var channel = new MessageChannel();
+    channel.port1.onmessage = flush;
+    return function () {
+      return channel.port2.postMessage(0);
+    };
+  }
+
+  function useSetTimeout() {
+    // Store setTimeout reference so es6-promise will be unaffected by
+    // other code modifying setTimeout (like sinon.useFakeTimers())
+    var globalSetTimeout = setTimeout;
+    return function () {
+      return globalSetTimeout(flush, 1);
+    };
+  }
+
+  var queue = new Array(1000);
+  function flush() {
+    for (var i = 0; i < len; i += 2) {
+      var callback = queue[i];
+      var arg = queue[i + 1];
+
+      callback(arg);
+
+      queue[i] = undefined;
+      queue[i + 1] = undefined;
+    }
+
+    len = 0;
+  }
+
+  function attemptVertx() {
+    try {
+      var vertx = Function('return this')().require('vertx');
+      vertxNext = vertx.runOnLoop || vertx.runOnContext;
+      return useVertxTimer();
+    } catch (e) {
+      return useSetTimeout();
+    }
+  }
+
+  var scheduleFlush = void 0;
+  // Decide what async method to use to triggering processing of queued callbacks:
+  if (isNode) {
+    scheduleFlush = useNextTick();
+  } else if (BrowserMutationObserver) {
+    scheduleFlush = useMutationObserver();
+  } else if (isWorker) {
+    scheduleFlush = useMessageChannel();
+  } else if (browserWindow === undefined && typeof commonjsRequire === 'function') {
+    scheduleFlush = attemptVertx();
+  } else {
+    scheduleFlush = useSetTimeout();
+  }
+
+  function then(onFulfillment, onRejection) {
+    var parent = this;
+
+    var child = new this.constructor(noop);
+
+    if (child[PROMISE_ID] === undefined) {
+      makePromise(child);
+    }
+
+    var _state = parent._state;
+
+    if (_state) {
+      var callback = arguments[_state - 1];
+      asap(function () {
+        return invokeCallback(_state, child, callback, parent._result);
+      });
+    } else {
+      subscribe(parent, child, onFulfillment, onRejection);
+    }
+
+    return child;
+  }
+
+  /**
+    `Promise.resolve` returns a promise that will become resolved with the
+    passed `value`. It is shorthand for the following:
+  
+    ```javascript
+    let promise = new Promise(function(resolve, reject){
+      resolve(1);
+    });
+  
+    promise.then(function(value){
+      // value === 1
+    });
+    ```
+  
+    Instead of writing the above, your code now simply becomes the following:
+  
+    ```javascript
+    let promise = Promise.resolve(1);
+  
+    promise.then(function(value){
+      // value === 1
+    });
+    ```
+  
+    @method resolve
+    @static
+    @param {Any} value value that the returned promise will be resolved with
+    Useful for tooling.
+    @return {Promise} a promise that will become fulfilled with the given
+    `value`
+  */
+  function resolve$1(object) {
+    /*jshint validthis:true */
+    var Constructor = this;
+
+    if (object && (typeof object === 'undefined' ? 'undefined' : _typeof(object)) === 'object' && object.constructor === Constructor) {
+      return object;
+    }
+
+    var promise = new Constructor(noop);
+    resolve(promise, object);
+    return promise;
+  }
+
+  var PROMISE_ID = Math.random().toString(36).substring(2);
+
+  function noop() {}
+
+  var PENDING = void 0;
+  var FULFILLED = 1;
+  var REJECTED = 2;
+
+  var TRY_CATCH_ERROR = { error: null };
+
+  function selfFulfillment() {
+    return new TypeError("You cannot resolve a promise with itself");
+  }
+
+  function cannotReturnOwn() {
+    return new TypeError('A promises callback cannot return that same promise.');
+  }
+
+  function getThen(promise) {
+    try {
+      return promise.then;
+    } catch (error) {
+      TRY_CATCH_ERROR.error = error;
+      return TRY_CATCH_ERROR;
+    }
+  }
+
+  function tryThen(then$$1, value, fulfillmentHandler, rejectionHandler) {
+    try {
+      then$$1.call(value, fulfillmentHandler, rejectionHandler);
+    } catch (e) {
+      return e;
+    }
+  }
+
+  function handleForeignThenable(promise, thenable, then$$1) {
+    asap(function (promise) {
+      var sealed = false;
+      var error = tryThen(then$$1, thenable, function (value) {
+        if (sealed) {
+          return;
+        }
+        sealed = true;
+        if (thenable !== value) {
+          resolve(promise, value);
+        } else {
+          fulfill(promise, value);
+        }
+      }, function (reason) {
+        if (sealed) {
+          return;
+        }
+        sealed = true;
+
+        reject(promise, reason);
+      }, 'Settle: ' + (promise._label || ' unknown promise'));
+
+      if (!sealed && error) {
+        sealed = true;
+        reject(promise, error);
+      }
+    }, promise);
+  }
+
+  function handleOwnThenable(promise, thenable) {
+    if (thenable._state === FULFILLED) {
+      fulfill(promise, thenable._result);
+    } else if (thenable._state === REJECTED) {
+      reject(promise, thenable._result);
+    } else {
+      subscribe(thenable, undefined, function (value) {
+        return resolve(promise, value);
+      }, function (reason) {
+        return reject(promise, reason);
+      });
+    }
+  }
+
+  function handleMaybeThenable(promise, maybeThenable, then$$1) {
+    if (maybeThenable.constructor === promise.constructor && then$$1 === then && maybeThenable.constructor.resolve === resolve$1) {
+      handleOwnThenable(promise, maybeThenable);
+    } else {
+      if (then$$1 === TRY_CATCH_ERROR) {
+        reject(promise, TRY_CATCH_ERROR.error);
+        TRY_CATCH_ERROR.error = null;
+      } else if (then$$1 === undefined) {
+        fulfill(promise, maybeThenable);
+      } else if (isFunction(then$$1)) {
+        handleForeignThenable(promise, maybeThenable, then$$1);
+      } else {
+        fulfill(promise, maybeThenable);
+      }
+    }
+  }
+
+  function resolve(promise, value) {
+    if (promise === value) {
+      reject(promise, selfFulfillment());
+    } else if (objectOrFunction(value)) {
+      handleMaybeThenable(promise, value, getThen(value));
+    } else {
+      fulfill(promise, value);
+    }
+  }
+
+  function publishRejection(promise) {
+    if (promise._onerror) {
+      promise._onerror(promise._result);
+    }
+
+    publish(promise);
+  }
+
+  function fulfill(promise, value) {
+    if (promise._state !== PENDING) {
+      return;
+    }
+
+    promise._result = value;
+    promise._state = FULFILLED;
+
+    if (promise._subscribers.length !== 0) {
+      asap(publish, promise);
+    }
+  }
+
+  function reject(promise, reason) {
+    if (promise._state !== PENDING) {
+      return;
+    }
+    promise._state = REJECTED;
+    promise._result = reason;
+
+    asap(publishRejection, promise);
+  }
+
+  function subscribe(parent, child, onFulfillment, onRejection) {
+    var _subscribers = parent._subscribers;
+    var length = _subscribers.length;
+
+    parent._onerror = null;
+
+    _subscribers[length] = child;
+    _subscribers[length + FULFILLED] = onFulfillment;
+    _subscribers[length + REJECTED] = onRejection;
+
+    if (length === 0 && parent._state) {
+      asap(publish, parent);
+    }
+  }
+
+  function publish(promise) {
+    var subscribers = promise._subscribers;
+    var settled = promise._state;
+
+    if (subscribers.length === 0) {
+      return;
+    }
+
+    var child = void 0,
+        callback = void 0,
+        detail = promise._result;
+
+    for (var i = 0; i < subscribers.length; i += 3) {
+      child = subscribers[i];
+      callback = subscribers[i + settled];
+
+      if (child) {
+        invokeCallback(settled, child, callback, detail);
+      } else {
+        callback(detail);
+      }
+    }
+
+    promise._subscribers.length = 0;
+  }
+
+  function tryCatch(callback, detail) {
+    try {
+      return callback(detail);
+    } catch (e) {
+      TRY_CATCH_ERROR.error = e;
+      return TRY_CATCH_ERROR;
+    }
+  }
+
+  function invokeCallback(settled, promise, callback, detail) {
+    var hasCallback = isFunction(callback),
+        value = void 0,
+        error = void 0,
+        succeeded = void 0,
+        failed = void 0;
+
+    if (hasCallback) {
+      value = tryCatch(callback, detail);
+
+      if (value === TRY_CATCH_ERROR) {
+        failed = true;
+        error = value.error;
+        value.error = null;
+      } else {
+        succeeded = true;
+      }
+
+      if (promise === value) {
+        reject(promise, cannotReturnOwn());
+        return;
+      }
+    } else {
+      value = detail;
+      succeeded = true;
+    }
+
+    if (promise._state !== PENDING) ; else if (hasCallback && succeeded) {
+      resolve(promise, value);
+    } else if (failed) {
+      reject(promise, error);
+    } else if (settled === FULFILLED) {
+      fulfill(promise, value);
+    } else if (settled === REJECTED) {
+      reject(promise, value);
+    }
+  }
+
+  function initializePromise(promise, resolver) {
+    try {
+      resolver(function resolvePromise(value) {
+        resolve(promise, value);
+      }, function rejectPromise(reason) {
+        reject(promise, reason);
+      });
+    } catch (e) {
+      reject(promise, e);
+    }
+  }
+
+  var id = 0;
+  function nextId() {
+    return id++;
+  }
+
+  function makePromise(promise) {
+    promise[PROMISE_ID] = id++;
+    promise._state = undefined;
+    promise._result = undefined;
+    promise._subscribers = [];
+  }
+
+  function validationError() {
+    return new Error('Array Methods must be provided an Array');
+  }
+
+  var Enumerator = function () {
+    function Enumerator(Constructor, input) {
+      this._instanceConstructor = Constructor;
+      this.promise = new Constructor(noop);
+
+      if (!this.promise[PROMISE_ID]) {
+        makePromise(this.promise);
+      }
+
+      if (isArray(input)) {
+        this.length = input.length;
+        this._remaining = input.length;
+
+        this._result = new Array(this.length);
+
+        if (this.length === 0) {
+          fulfill(this.promise, this._result);
+        } else {
+          this.length = this.length || 0;
+          this._enumerate(input);
+          if (this._remaining === 0) {
+            fulfill(this.promise, this._result);
+          }
+        }
+      } else {
+        reject(this.promise, validationError());
+      }
+    }
+
+    Enumerator.prototype._enumerate = function _enumerate(input) {
+      for (var i = 0; this._state === PENDING && i < input.length; i++) {
+        this._eachEntry(input[i], i);
+      }
+    };
+
+    Enumerator.prototype._eachEntry = function _eachEntry(entry, i) {
+      var c = this._instanceConstructor;
+      var resolve$$1 = c.resolve;
+
+      if (resolve$$1 === resolve$1) {
+        var _then = getThen(entry);
+
+        if (_then === then && entry._state !== PENDING) {
+          this._settledAt(entry._state, i, entry._result);
+        } else if (typeof _then !== 'function') {
+          this._remaining--;
+          this._result[i] = entry;
+        } else if (c === Promise$1) {
+          var promise = new c(noop);
+          handleMaybeThenable(promise, entry, _then);
+          this._willSettleAt(promise, i);
+        } else {
+          this._willSettleAt(new c(function (resolve$$1) {
+            return resolve$$1(entry);
+          }), i);
+        }
+      } else {
+        this._willSettleAt(resolve$$1(entry), i);
+      }
+    };
+
+    Enumerator.prototype._settledAt = function _settledAt(state, i, value) {
+      var promise = this.promise;
+
+      if (promise._state === PENDING) {
+        this._remaining--;
+
+        if (state === REJECTED) {
+          reject(promise, value);
+        } else {
+          this._result[i] = value;
+        }
+      }
+
+      if (this._remaining === 0) {
+        fulfill(promise, this._result);
+      }
+    };
+
+    Enumerator.prototype._willSettleAt = function _willSettleAt(promise, i) {
+      var enumerator = this;
+
+      subscribe(promise, undefined, function (value) {
+        return enumerator._settledAt(FULFILLED, i, value);
+      }, function (reason) {
+        return enumerator._settledAt(REJECTED, i, reason);
+      });
+    };
+
+    return Enumerator;
+  }();
+
+  /**
+    `Promise.all` accepts an array of promises, and returns a new promise which
+    is fulfilled with an array of fulfillment values for the passed promises, or
+    rejected with the reason of the first passed promise to be rejected. It casts all
+    elements of the passed iterable to promises as it runs this algorithm.
+  
+    Example:
+  
+    ```javascript
+    let promise1 = resolve(1);
+    let promise2 = resolve(2);
+    let promise3 = resolve(3);
+    let promises = [ promise1, promise2, promise3 ];
+  
+    Promise.all(promises).then(function(array){
+      // The array here would be [ 1, 2, 3 ];
+    });
+    ```
+  
+    If any of the `promises` given to `all` are rejected, the first promise
+    that is rejected will be given as an argument to the returned promises's
+    rejection handler. For example:
+  
+    Example:
+  
+    ```javascript
+    let promise1 = resolve(1);
+    let promise2 = reject(new Error("2"));
+    let promise3 = reject(new Error("3"));
+    let promises = [ promise1, promise2, promise3 ];
+  
+    Promise.all(promises).then(function(array){
+      // Code here never runs because there are rejected promises!
+    }, function(error) {
+      // error.message === "2"
+    });
+    ```
+  
+    @method all
+    @static
+    @param {Array} entries array of promises
+    @param {String} label optional string for labeling the promise.
+    Useful for tooling.
+    @return {Promise} promise that is fulfilled when all `promises` have been
+    fulfilled, or rejected if any of them become rejected.
+    @static
+  */
+  function all(entries) {
+    return new Enumerator(this, entries).promise;
+  }
+
+  /**
+    `Promise.race` returns a new promise which is settled in the same way as the
+    first passed promise to settle.
+  
+    Example:
+  
+    ```javascript
+    let promise1 = new Promise(function(resolve, reject){
+      setTimeout(function(){
+        resolve('promise 1');
+      }, 200);
+    });
+  
+    let promise2 = new Promise(function(resolve, reject){
+      setTimeout(function(){
+        resolve('promise 2');
+      }, 100);
+    });
+  
+    Promise.race([promise1, promise2]).then(function(result){
+      // result === 'promise 2' because it was resolved before promise1
+      // was resolved.
+    });
+    ```
+  
+    `Promise.race` is deterministic in that only the state of the first
+    settled promise matters. For example, even if other promises given to the
+    `promises` array argument are resolved, but the first settled promise has
+    become rejected before the other promises became fulfilled, the returned
+    promise will become rejected:
+  
+    ```javascript
+    let promise1 = new Promise(function(resolve, reject){
+      setTimeout(function(){
+        resolve('promise 1');
+      }, 200);
+    });
+  
+    let promise2 = new Promise(function(resolve, reject){
+      setTimeout(function(){
+        reject(new Error('promise 2'));
+      }, 100);
+    });
+  
+    Promise.race([promise1, promise2]).then(function(result){
+      // Code here never runs
+    }, function(reason){
+      // reason.message === 'promise 2' because promise 2 became rejected before
+      // promise 1 became fulfilled
+    });
+    ```
+  
+    An example real-world use case is implementing timeouts:
+  
+    ```javascript
+    Promise.race([ajax('foo.json'), timeout(5000)])
+    ```
+  
+    @method race
+    @static
+    @param {Array} promises array of promises to observe
+    Useful for tooling.
+    @return {Promise} a promise which settles in the same way as the first passed
+    promise to settle.
+  */
+  function race(entries) {
+    /*jshint validthis:true */
+    var Constructor = this;
+
+    if (!isArray(entries)) {
+      return new Constructor(function (_, reject) {
+        return reject(new TypeError('You must pass an array to race.'));
+      });
+    } else {
+      return new Constructor(function (resolve, reject) {
+        var length = entries.length;
+        for (var i = 0; i < length; i++) {
+          Constructor.resolve(entries[i]).then(resolve, reject);
+        }
+      });
+    }
+  }
+
+  /**
+    `Promise.reject` returns a promise rejected with the passed `reason`.
+    It is shorthand for the following:
+  
+    ```javascript
+    let promise = new Promise(function(resolve, reject){
+      reject(new Error('WHOOPS'));
+    });
+  
+    promise.then(function(value){
+      // Code here doesn't run because the promise is rejected!
+    }, function(reason){
+      // reason.message === 'WHOOPS'
+    });
+    ```
+  
+    Instead of writing the above, your code now simply becomes the following:
+  
+    ```javascript
+    let promise = Promise.reject(new Error('WHOOPS'));
+  
+    promise.then(function(value){
+      // Code here doesn't run because the promise is rejected!
+    }, function(reason){
+      // reason.message === 'WHOOPS'
+    });
+    ```
+  
+    @method reject
+    @static
+    @param {Any} reason value that the returned promise will be rejected with.
+    Useful for tooling.
+    @return {Promise} a promise rejected with the given `reason`.
+  */
+  function reject$1(reason) {
+    /*jshint validthis:true */
+    var Constructor = this;
+    var promise = new Constructor(noop);
+    reject(promise, reason);
+    return promise;
+  }
+
+  function needsResolver() {
+    throw new TypeError('You must pass a resolver function as the first argument to the promise constructor');
+  }
+
+  function needsNew() {
+    throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+  }
+
+  /**
+    Promise objects represent the eventual result of an asynchronous operation. The
+    primary way of interacting with a promise is through its `then` method, which
+    registers callbacks to receive either a promise's eventual value or the reason
+    why the promise cannot be fulfilled.
+  
+    Terminology
+    -----------
+  
+    - `promise` is an object or function with a `then` method whose behavior conforms to this specification.
+    - `thenable` is an object or function that defines a `then` method.
+    - `value` is any legal JavaScript value (including undefined, a thenable, or a promise).
+    - `exception` is a value that is thrown using the throw statement.
+    - `reason` is a value that indicates why a promise was rejected.
+    - `settled` the final resting state of a promise, fulfilled or rejected.
+  
+    A promise can be in one of three states: pending, fulfilled, or rejected.
+  
+    Promises that are fulfilled have a fulfillment value and are in the fulfilled
+    state.  Promises that are rejected have a rejection reason and are in the
+    rejected state.  A fulfillment value is never a thenable.
+  
+    Promises can also be said to *resolve* a value.  If this value is also a
+    promise, then the original promise's settled state will match the value's
+    settled state.  So a promise that *resolves* a promise that rejects will
+    itself reject, and a promise that *resolves* a promise that fulfills will
+    itself fulfill.
+  
+  
+    Basic Usage:
+    ------------
+  
+    ```js
+    let promise = new Promise(function(resolve, reject) {
+      // on success
+      resolve(value);
+  
+      // on failure
+      reject(reason);
+    });
+  
+    promise.then(function(value) {
+      // on fulfillment
+    }, function(reason) {
+      // on rejection
+    });
+    ```
+  
+    Advanced Usage:
+    ---------------
+  
+    Promises shine when abstracting away asynchronous interactions such as
+    `XMLHttpRequest`s.
+  
+    ```js
+    function getJSON(url) {
+      return new Promise(function(resolve, reject){
+        let xhr = new XMLHttpRequest();
+  
+        xhr.open('GET', url);
+        xhr.onreadystatechange = handler;
+        xhr.responseType = 'json';
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.send();
+  
+        function handler() {
+          if (this.readyState === this.DONE) {
+            if (this.status === 200) {
+              resolve(this.response);
+            } else {
+              reject(new Error('getJSON: `' + url + '` failed with status: [' + this.status + ']'));
+            }
+          }
+        };
+      });
+    }
+  
+    getJSON('/posts.json').then(function(json) {
+      // on fulfillment
+    }, function(reason) {
+      // on rejection
+    });
+    ```
+  
+    Unlike callbacks, promises are great composable primitives.
+  
+    ```js
+    Promise.all([
+      getJSON('/posts'),
+      getJSON('/comments')
+    ]).then(function(values){
+      values[0] // => postsJSON
+      values[1] // => commentsJSON
+  
+      return values;
+    });
+    ```
+  
+    @class Promise
+    @param {Function} resolver
+    Useful for tooling.
+    @constructor
+  */
+
+  var Promise$1 = function () {
+    function Promise(resolver) {
+      this[PROMISE_ID] = nextId();
+      this._result = this._state = undefined;
+      this._subscribers = [];
+
+      if (noop !== resolver) {
+        typeof resolver !== 'function' && needsResolver();
+        this instanceof Promise ? initializePromise(this, resolver) : needsNew();
+      }
+    }
+
+    /**
+    The primary way of interacting with a promise is through its `then` method,
+    which registers callbacks to receive either a promise's eventual value or the
+    reason why the promise cannot be fulfilled.
+     ```js
+    findUser().then(function(user){
+      // user is available
+    }, function(reason){
+      // user is unavailable, and you are given the reason why
+    });
+    ```
+     Chaining
+    --------
+     The return value of `then` is itself a promise.  This second, 'downstream'
+    promise is resolved with the return value of the first promise's fulfillment
+    or rejection handler, or rejected if the handler throws an exception.
+     ```js
+    findUser().then(function (user) {
+      return user.name;
+    }, function (reason) {
+      return 'default name';
+    }).then(function (userName) {
+      // If `findUser` fulfilled, `userName` will be the user's name, otherwise it
+      // will be `'default name'`
+    });
+     findUser().then(function (user) {
+      throw new Error('Found user, but still unhappy');
+    }, function (reason) {
+      throw new Error('`findUser` rejected and we're unhappy');
+    }).then(function (value) {
+      // never reached
+    }, function (reason) {
+      // if `findUser` fulfilled, `reason` will be 'Found user, but still unhappy'.
+      // If `findUser` rejected, `reason` will be '`findUser` rejected and we're unhappy'.
+    });
+    ```
+    If the downstream promise does not specify a rejection handler, rejection reasons will be propagated further downstream.
+     ```js
+    findUser().then(function (user) {
+      throw new PedagogicalException('Upstream error');
+    }).then(function (value) {
+      // never reached
+    }).then(function (value) {
+      // never reached
+    }, function (reason) {
+      // The `PedgagocialException` is propagated all the way down to here
+    });
+    ```
+     Assimilation
+    ------------
+     Sometimes the value you want to propagate to a downstream promise can only be
+    retrieved asynchronously. This can be achieved by returning a promise in the
+    fulfillment or rejection handler. The downstream promise will then be pending
+    until the returned promise is settled. This is called *assimilation*.
+     ```js
+    findUser().then(function (user) {
+      return findCommentsByAuthor(user);
+    }).then(function (comments) {
+      // The user's comments are now available
+    });
+    ```
+     If the assimliated promise rejects, then the downstream promise will also reject.
+     ```js
+    findUser().then(function (user) {
+      return findCommentsByAuthor(user);
+    }).then(function (comments) {
+      // If `findCommentsByAuthor` fulfills, we'll have the value here
+    }, function (reason) {
+      // If `findCommentsByAuthor` rejects, we'll have the reason here
+    });
+    ```
+     Simple Example
+    --------------
+     Synchronous Example
+     ```javascript
+    let result;
+     try {
+      result = findResult();
+      // success
+    } catch(reason) {
+      // failure
+    }
+    ```
+     Errback Example
+     ```js
+    findResult(function(result, err){
+      if (err) {
+        // failure
+      } else {
+        // success
+      }
+    });
+    ```
+     Promise Example;
+     ```javascript
+    findResult().then(function(result){
+      // success
+    }, function(reason){
+      // failure
+    });
+    ```
+     Advanced Example
+    --------------
+     Synchronous Example
+     ```javascript
+    let author, books;
+     try {
+      author = findAuthor();
+      books  = findBooksByAuthor(author);
+      // success
+    } catch(reason) {
+      // failure
+    }
+    ```
+     Errback Example
+     ```js
+     function foundBooks(books) {
+     }
+     function failure(reason) {
+     }
+     findAuthor(function(author, err){
+      if (err) {
+        failure(err);
+        // failure
+      } else {
+        try {
+          findBoooksByAuthor(author, function(books, err) {
+            if (err) {
+              failure(err);
+            } else {
+              try {
+                foundBooks(books);
+              } catch(reason) {
+                failure(reason);
+              }
+            }
+          });
+        } catch(error) {
+          failure(err);
+        }
+        // success
+      }
+    });
+    ```
+     Promise Example;
+     ```javascript
+    findAuthor().
+      then(findBooksByAuthor).
+      then(function(books){
+        // found books
+    }).catch(function(reason){
+      // something went wrong
+    });
+    ```
+     @method then
+    @param {Function} onFulfilled
+    @param {Function} onRejected
+    Useful for tooling.
+    @return {Promise}
+    */
+
+    /**
+    `catch` is simply sugar for `then(undefined, onRejection)` which makes it the same
+    as the catch block of a try/catch statement.
+    ```js
+    function findAuthor(){
+    throw new Error('couldn't find that author');
+    }
+    // synchronous
+    try {
+    findAuthor();
+    } catch(reason) {
+    // something went wrong
+    }
+    // async with promises
+    findAuthor().catch(function(reason){
+    // something went wrong
+    });
+    ```
+    @method catch
+    @param {Function} onRejection
+    Useful for tooling.
+    @return {Promise}
+    */
+
+    Promise.prototype.catch = function _catch(onRejection) {
+      return this.then(null, onRejection);
+    };
+
+    /**
+      `finally` will be invoked regardless of the promise's fate just as native
+      try/catch/finally behaves
+    
+      Synchronous example:
+    
+      ```js
+      findAuthor() {
+        if (Math.random() > 0.5) {
+          throw new Error();
+        }
+        return new Author();
+      }
+    
+      try {
+        return findAuthor(); // succeed or fail
+      } catch(error) {
+        return findOtherAuther();
+      } finally {
+        // always runs
+        // doesn't affect the return value
+      }
+      ```
+    
+      Asynchronous example:
+    
+      ```js
+      findAuthor().catch(function(reason){
+        return findOtherAuther();
+      }).finally(function(){
+        // author was either found, or not
+      });
+      ```
+    
+      @method finally
+      @param {Function} callback
+      @return {Promise}
+    */
+
+    Promise.prototype.finally = function _finally(callback) {
+      var promise = this;
+      var constructor = promise.constructor;
+
+      if (isFunction(callback)) {
+        return promise.then(function (value) {
+          return constructor.resolve(callback()).then(function () {
+            return value;
+          });
+        }, function (reason) {
+          return constructor.resolve(callback()).then(function () {
+            throw reason;
+          });
+        });
+      }
+
+      return promise.then(callback, callback);
+    };
+
+    return Promise;
+  }();
+
+  Promise$1.prototype.then = then;
+  Promise$1.all = all;
+  Promise$1.race = race;
+  Promise$1.resolve = resolve$1;
+  Promise$1.reject = reject$1;
+  Promise$1._setScheduler = setScheduler;
+  Promise$1._setAsap = setAsap;
+  Promise$1._asap = asap;
+
+  /*global self*/
+  function polyfill() {
+    var local = void 0;
+
+    if (typeof commonjsGlobal !== 'undefined') {
+      local = commonjsGlobal;
+    } else if (typeof self !== 'undefined') {
+      local = self;
+    } else {
+      try {
+        local = Function('return this')();
+      } catch (e) {
+        throw new Error('polyfill failed because global object is unavailable in this environment');
+      }
+    }
+
+    var P = local.Promise;
+
+    if (P) {
+      var promiseToString = null;
+      try {
+        promiseToString = Object.prototype.toString.call(P.resolve());
+      } catch (e) {
+        // silently ignored
+      }
+
+      if (promiseToString === '[object Promise]' && !P.cast) {
+        return;
+      }
+    }
+
+    local.Promise = Promise$1;
+  }
+
+  // Strange compat..
+  Promise$1.polyfill = polyfill;
+  Promise$1.Promise = Promise$1;
+
+  return Promise$1;
+});
+
 
 });
 
+var promise = createCommonjsModule(function (module) {
+
+// Installs ES6 Promise polyfill if a native Promise is not available
+
+if (typeof Promise === 'undefined') {
+  es6Promise.polyfill();
+}
+
+module.export = Promise;
+});
+
 /*
- * xtend by Jake Verbaten
+ * Copyright 2014-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
  *
- * Licensed under MIT
- * https://github.com/Raynos/xtend
+ * @author Scott Andrews
  */
-var extendMutable_1 = extendMutable;
-var extend_1 = extend;
 
-var hasOwnProperty = Object.prototype.hasOwnProperty;
+/**
+ * Add common helper methods to a client impl
+ *
+ * @param {function} impl the client implementation
+ * @param {Client} [target] target of this client, used when wrapping other clients
+ * @returns {Client} the client impl with additional methods
+ */
 
-function extendMutable(target) {
-    for (var i = 1; i < arguments.length; i++) {
-        var source = arguments[i];
+var client = function client(impl, target) {
 
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key];
-            }
-        }
-    }
+	if (target) {
 
-    return target;
+		/**
+   * @returns {Client} the target client
+   */
+		impl.skip = function skip() {
+			return target;
+		};
+	}
+
+	/**
+  * Allow a client to easily be wrapped by an interceptor
+  *
+  * @param {Interceptor} interceptor the interceptor to wrap this client with
+  * @param [config] configuration for the interceptor
+  * @returns {Client} the newly wrapped client
+  */
+	impl.wrap = function wrap(interceptor, config) {
+		return interceptor(impl, config);
+	};
+
+	/**
+  * @deprecated
+  */
+	impl.chain = function chain() {
+		if (typeof console !== 'undefined') {
+			console.log('rest.js: client.chain() is deprecated, use client.wrap() instead');
+		}
+
+		return impl.wrap.apply(this, arguments);
+	};
+
+	return impl;
+};
+
+/**
+ * Plain JS Object containing properties that represent an HTTP request.
+ *
+ * Depending on the capabilities of the underlying client, a request
+ * may be cancelable. If a request may be canceled, the client will add
+ * a canceled flag and cancel function to the request object. Canceling
+ * the request will put the response into an error state.
+ *
+ * @field {string} [method='GET'] HTTP method, commonly GET, POST, PUT, DELETE or HEAD
+ * @field {string|UrlBuilder} [path=''] path template with optional path variables
+ * @field {Object} [params] parameters for the path template and query string
+ * @field {Object} [headers] custom HTTP headers to send, in addition to the clients default headers
+ * @field [entity] the HTTP entity, common for POST or PUT requests
+ * @field {boolean} [canceled] true if the request has been canceled, set by the client
+ * @field {Function} [cancel] cancels the request if invoked, provided by the client
+ * @field {Client} [originator] the client that first handled this request, provided by the interceptor
+ *
+ * @class Request
+ */
+
+/**
+ * Plain JS Object containing properties that represent an HTTP response
+ *
+ * @field {Object} [request] the request object as received by the root client
+ * @field {Object} [raw] the underlying request object, like XmlHttpRequest in a browser
+ * @field {number} [status.code] status code of the response (i.e. 200, 404)
+ * @field {string} [status.text] status phrase of the response
+ * @field {Object] [headers] response headers hash of normalized name, value pairs
+ * @field [entity] the response body
+ *
+ * @class Response
+ */
+
+/**
+ * HTTP client particularly suited for RESTful operations.
+ *
+ * @field {function} wrap wraps this client with a new interceptor returning the wrapped client
+ *
+ * @param {Request} the HTTP request
+ * @returns {ResponsePromise<Response>} a promise the resolves to the HTTP response
+ *
+ * @class Client
+ */
+
+/**
+ * Extended when.js Promises/A+ promise with HTTP specific helpers
+ *q
+ * @method entity promise for the HTTP entity
+ * @method status promise for the HTTP status code
+ * @method headers promise for the HTTP response headers
+ * @method header promise for a specific HTTP response header
+ *
+ * @class ResponsePromise
+ * @extends Promise
+ */
+
+var client$1, target, platformDefault;
+
+client$1 = client;
+
+if (typeof Promise !== 'function' && console && console.log) {
+  console.log('An ES6 Promise implementation is required to use rest.js. See https://github.com/cujojs/when/blob/master/docs/es6-promise-shim.md for using when.js as a Promise polyfill.');
 }
 
-function extend() {
-    var target = {};
-
-    for (var i = 0; i < arguments.length; i++) {
-        var source = arguments[i];
-
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key];
-            }
-        }
-    }
-
-    return target;
+/**
+ * Make a request with the default client
+ * @param {Request} the HTTP request
+ * @returns {Promise<Response>} a promise the resolves to the HTTP response
+ */
+function defaultClient() {
+  return target.apply(void 0, arguments);
 }
 
-var xtend = {
-	extendMutable: extendMutable_1,
-	extend: extend_1
+/**
+ * Change the default client
+ * @param {Client} client the new default client
+ */
+defaultClient.setDefaultClient = function setDefaultClient(client$$1) {
+  target = client$$1;
+};
+
+/**
+ * Obtain a direct reference to the current default client
+ * @returns {Client} the default client
+ */
+defaultClient.getDefaultClient = function getDefaultClient() {
+  return target;
+};
+
+/**
+ * Reset the default client to the platform default
+ */
+defaultClient.resetDefaultClient = function resetDefaultClient() {
+  target = platformDefault;
+};
+
+/**
+ * @private
+ */
+defaultClient.setPlatformDefaultClient = function setPlatformDefaultClient(client$$1) {
+  if (platformDefault) {
+    throw new Error('Unable to redefine platformDefaultClient');
+  }
+  target = platformDefault = client$$1;
+};
+
+var _default = client$1(defaultClient);
+
+/*
+ * Copyright 2012-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+var empty = {};
+
+/**
+ * Mix the properties from the source object into the destination object.
+ * When the same property occurs in more then one object, the right most
+ * value wins.
+ *
+ * @param {Object} dest the object to copy properties to
+ * @param {Object} sources the objects to copy properties from.  May be 1 to N arguments, but not an Array.
+ * @return {Object} the destination object
+ */
+function mixin(dest /*, sources... */) {
+  var i, l, source, name;
+
+  if (!dest) {
+    dest = {};
+  }
+  for (i = 1, l = arguments.length; i < l; i += 1) {
+    source = arguments[i];
+    for (name in source) {
+      if (!(name in dest) || dest[name] !== source[name] && (!(name in empty) || empty[name] !== source[name])) {
+        dest[name] = source[name];
+      }
+    }
+  }
+
+  return dest; // Object
+}
+
+var mixin_1 = mixin;
+
+/*
+ * Copyright 2012-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+/**
+ * Normalize HTTP header names using the pseudo camel case.
+ *
+ * For example:
+ *   content-type         -> Content-Type
+ *   accepts              -> Accepts
+ *   x-custom-header-name -> X-Custom-Header-Name
+ *
+ * @param {string} name the raw header name
+ * @return {string} the normalized header name
+ */
+
+function normalizeHeaderName(name) {
+  return name.toLowerCase().split('-').map(function (chunk) {
+    return chunk.charAt(0).toUpperCase() + chunk.slice(1);
+  }).join('-');
+}
+
+var normalizeHeaderName_1 = normalizeHeaderName;
+
+/*jshint latedef: nofunc */
+
+
+
+function property(promise, name) {
+  return promise.then(function (value) {
+    return value && value[name];
+  }, function (value) {
+    return Promise.reject(value && value[name]);
+  });
+}
+
+/**
+ * Obtain the response entity
+ *
+ * @returns {Promise} for the response entity
+ */
+function entity() {
+  /*jshint validthis:true */
+  return property(this, 'entity');
+}
+
+/**
+ * Obtain the response status
+ *
+ * @returns {Promise} for the response status
+ */
+function status() {
+  /*jshint validthis:true */
+  return property(property(this, 'status'), 'code');
+}
+
+/**
+ * Obtain the response headers map
+ *
+ * @returns {Promise} for the response headers map
+ */
+function headers() {
+  /*jshint validthis:true */
+  return property(this, 'headers');
+}
+
+/**
+ * Obtain a specific response header
+ *
+ * @param {String} headerName the header to retrieve
+ * @returns {Promise} for the response header's value
+ */
+function header(headerName) {
+  /*jshint validthis:true */
+  headerName = normalizeHeaderName_1(headerName);
+  return property(this.headers(), headerName);
+}
+
+/**
+ * Follow a related resource
+ *
+ * The relationship to follow may be define as a plain string, an object
+ * with the rel and params, or an array containing one or more entries
+ * with the previous forms.
+ *
+ * Examples:
+ *   response.follow('next')
+ *
+ *   response.follow({ rel: 'next', params: { pageSize: 100 } })
+ *
+ *   response.follow([
+ *       { rel: 'items', params: { projection: 'noImages' } },
+ *       'search',
+ *       { rel: 'findByGalleryIsNull', params: { projection: 'noImages' } },
+ *       'items'
+ *   ])
+ *
+ * @param {String|Object|Array} rels one, or more, relationships to follow
+ * @returns ResponsePromise<Response> related resource
+ */
+function follow(rels) {
+  /*jshint validthis:true */
+  rels = [].concat(rels);
+
+  return make(rels.reduce(function (response, rel) {
+    return response.then(function (response) {
+      if (typeof rel === 'string') {
+        rel = { rel: rel };
+      }
+      if (typeof response.entity.clientFor !== 'function') {
+        throw new Error('Hypermedia response expected');
+      }
+      var client = response.entity.clientFor(rel.rel);
+      return client({ params: rel.params });
+    });
+  }, this));
+}
+
+/**
+ * Wrap a Promise as an ResponsePromise
+ *
+ * @param {Promise<Response>} promise the promise for an HTTP Response
+ * @returns {ResponsePromise<Response>} wrapped promise for Response with additional helper methods
+ */
+function make(promise) {
+  promise.status = status;
+  promise.headers = headers;
+  promise.header = header;
+  promise.entity = entity;
+  promise.follow = follow;
+  return promise;
+}
+
+function responsePromise(obj, callback, errback) {
+  return make(Promise.resolve(obj).then(callback, errback));
+}
+
+responsePromise.make = make;
+responsePromise.reject = function (val) {
+  return make(Promise.reject(val));
+};
+responsePromise.promise = function (func) {
+  return make(new Promise(func));
+};
+
+var responsePromise_1 = responsePromise;
+
+var parser, http$1, https$1, mixin$1, normalizeHeaderName$1, responsePromise$1, client$2, httpsExp;
+
+parser = url;
+http$1 = http;
+https$1 = https;
+mixin$1 = mixin_1;
+normalizeHeaderName$1 = normalizeHeaderName_1;
+responsePromise$1 = responsePromise_1;
+client$2 = client;
+
+httpsExp = /^https/i;
+
+// TODO remove once Node 0.6 is no longer supported
+Buffer.concat = Buffer.concat || function (list, length) {
+	/*jshint plusplus:false, shadow:true */
+	// from https://github.com/joyent/node/blob/v0.8.21/lib/buffer.js
+	if (!Array.isArray(list)) {
+		throw new Error('Usage: Buffer.concat(list, [length])');
+	}
+
+	if (list.length === 0) {
+		return new Buffer(0);
+	} else if (list.length === 1) {
+		return list[0];
+	}
+
+	if (typeof length !== 'number') {
+		length = 0;
+		for (var i = 0; i < list.length; i++) {
+			var buf = list[i];
+			length += buf.length;
+		}
+	}
+
+	var buffer = new Buffer(length);
+	var pos = 0;
+	for (var i = 0; i < list.length; i++) {
+		var buf = list[i];
+		buf.copy(buffer, pos);
+		pos += buf.length;
+	}
+	return buffer;
+};
+
+var node = client$2(function node(request) {
+	/*jshint maxcomplexity:20 */
+	return responsePromise$1.promise(function (resolve, reject) {
+
+		var options, clientRequest, client$$1, url$$1, headers, entity, response;
+
+		request = typeof request === 'string' ? { path: request } : request || {};
+		response = { request: request };
+
+		if (request.canceled) {
+			response.error = 'precanceled';
+			reject(response);
+			return;
+		}
+
+		url$$1 = response.url = request.path || '';
+		client$$1 = url$$1.match(httpsExp) ? https$1 : http$1;
+
+		options = mixin$1({}, request.mixin, parser.parse(url$$1));
+
+		entity = request.entity;
+		request.method = request.method || (entity ? 'POST' : 'GET');
+		options.method = request.method;
+		headers = options.headers = {};
+		Object.keys(request.headers || {}).forEach(function (name) {
+			headers[normalizeHeaderName$1(name)] = request.headers[name];
+		});
+		if (!headers['Content-Length']) {
+			headers['Content-Length'] = entity ? Buffer.byteLength(entity, 'utf8') : 0;
+		}
+
+		request.canceled = false;
+		request.cancel = function cancel() {
+			request.canceled = true;
+			clientRequest.abort();
+		};
+
+		clientRequest = client$$1.request(options, function (clientResponse) {
+			// Array of Buffers to collect response chunks
+			var buffers = [];
+
+			response.raw = {
+				request: clientRequest,
+				response: clientResponse
+			};
+			response.status = {
+				code: clientResponse.statusCode
+				// node doesn't provide access to the status text
+			};
+			response.headers = {};
+			Object.keys(clientResponse.headers).forEach(function (name) {
+				response.headers[normalizeHeaderName$1(name)] = clientResponse.headers[name];
+			});
+
+			clientResponse.on('data', function (data) {
+				// Collect the next Buffer chunk
+				buffers.push(data);
+			});
+
+			clientResponse.on('end', function () {
+				// Create the final response entity
+				response.entity = buffers.length > 0 ? Buffer.concat(buffers).toString() : '';
+				buffers = null;
+
+				resolve(response);
+			});
+		});
+
+		clientRequest.on('error', function (e) {
+			response.error = e;
+			reject(response);
+		});
+
+		if (entity) {
+			clientRequest.write(entity);
+		}
+		clientRequest.end();
+	});
+});
+
+_default.setPlatformDefaultClient(node);
+
+var node_1 = _default;
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var defaultClient$1, mixin$2, responsePromise$2, client$3;
+
+defaultClient$1 = _default;
+mixin$2 = mixin_1;
+responsePromise$2 = responsePromise_1;
+client$3 = client;
+
+/**
+ * Interceptors have the ability to intercept the request and/org response
+ * objects.  They may augment, prune, transform or replace the
+ * request/response as needed.  Clients may be composed by wrapping
+ * together multiple interceptors.
+ *
+ * Configured interceptors are functional in nature.  Wrapping a client in
+ * an interceptor will not affect the client, merely the data that flows in
+ * and out of that client.  A common configuration can be created once and
+ * shared; specialization can be created by further wrapping that client
+ * with custom interceptors.
+ *
+ * @param {Client} [target] client to wrap
+ * @param {Object} [config] configuration for the interceptor, properties will be specific to the interceptor implementation
+ * @returns {Client} A client wrapped with the interceptor
+ *
+ * @class Interceptor
+ */
+
+function defaultInitHandler(config) {
+	return config;
+}
+
+function defaultRequestHandler(request /*, config, meta */) {
+	return request;
+}
+
+function defaultResponseHandler(response /*, config, meta */) {
+	return response;
+}
+
+/**
+ * Alternate return type for the request handler that allows for more complex interactions.
+ *
+ * @param properties.request the traditional request return object
+ * @param {Promise} [properties.abort] promise that resolves if/when the request is aborted
+ * @param {Client} [properties.client] override the defined client with an alternate client
+ * @param [properties.response] response for the request, short circuit the request
+ */
+function ComplexRequest(properties) {
+	if (!(this instanceof ComplexRequest)) {
+		// in case users forget the 'new' don't mix into the interceptor
+		return new ComplexRequest(properties);
+	}
+	mixin$2(this, properties);
+}
+
+/**
+ * Create a new interceptor for the provided handlers.
+ *
+ * @param {Function} [handlers.init] one time intialization, must return the config object
+ * @param {Function} [handlers.request] request handler
+ * @param {Function} [handlers.response] response handler regardless of error state
+ * @param {Function} [handlers.success] response handler when the request is not in error
+ * @param {Function} [handlers.error] response handler when the request is in error, may be used to 'unreject' an error state
+ * @param {Function} [handlers.client] the client to use if otherwise not specified, defaults to platform default client
+ *
+ * @returns {Interceptor}
+ */
+function interceptor(handlers) {
+
+	var initHandler, requestHandler, successResponseHandler, errorResponseHandler;
+
+	handlers = handlers || {};
+
+	initHandler = handlers.init || defaultInitHandler;
+	requestHandler = handlers.request || defaultRequestHandler;
+	successResponseHandler = handlers.success || handlers.response || defaultResponseHandler;
+	errorResponseHandler = handlers.error || function () {
+		// Propagate the rejection, with the result of the handler
+		return Promise.resolve((handlers.response || defaultResponseHandler).apply(this, arguments)).then(Promise.reject.bind(Promise));
+	};
+
+	return function (target, config) {
+
+		if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) === 'object') {
+			config = target;
+		}
+		if (typeof target !== 'function') {
+			target = handlers.client || defaultClient$1;
+		}
+
+		config = initHandler(config || {});
+
+		function interceptedClient(request) {
+			var context, meta;
+			context = {};
+			meta = { 'arguments': Array.prototype.slice.call(arguments), client: interceptedClient };
+			request = typeof request === 'string' ? { path: request } : request || {};
+			request.originator = request.originator || interceptedClient;
+			return responsePromise$2(requestHandler.call(context, request, config, meta), function (request) {
+				var response, abort, next;
+				next = target;
+				if (request instanceof ComplexRequest) {
+					// unpack request
+					abort = request.abort;
+					next = request.client || next;
+					response = request.response;
+					// normalize request, must be last
+					request = request.request;
+				}
+				response = response || Promise.resolve(request).then(function (request) {
+					return Promise.resolve(next(request)).then(function (response) {
+						return successResponseHandler.call(context, response, config, meta);
+					}, function (response) {
+						return errorResponseHandler.call(context, response, config, meta);
+					});
+				});
+				return abort ? Promise.race([response, abort]) : response;
+			}, function (error) {
+				return Promise.reject({ request: request, error: error });
+			});
+		}
+
+		return client$3(interceptedClient, target);
+	};
+}
+
+interceptor.ComplexRequest = ComplexRequest;
+
+var interceptor_1 = interceptor;
+
+var interceptor$1;
+
+interceptor$1 = interceptor_1;
+
+/**
+ * Rejects the response promise based on the status code.
+ *
+ * Codes greater than or equal to the provided value are rejected.  Default
+ * value 400.
+ *
+ * @param {Client} [client] client to wrap
+ * @param {number} [config.code=400] code to indicate a rejection
+ *
+ * @returns {Client}
+ */
+var errorCode = interceptor$1({
+  init: function init(config) {
+    config.code = config.code || 400;
+    return config;
+  },
+  response: function response(_response, config) {
+    if (_response.status && _response.status.code >= config.code) {
+      return Promise.reject(_response);
+    }
+    return _response;
+  }
+});
+
+/*
+ * Copyright 2012-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+var encodedSpaceRE, urlEncodedSpaceRE;
+
+encodedSpaceRE = /%20/g;
+urlEncodedSpaceRE = /\+/g;
+
+function urlEncode(str) {
+	str = encodeURIComponent(str);
+	// spec says space should be encoded as '+'
+	return str.replace(encodedSpaceRE, '+');
+}
+
+function urlDecode(str) {
+	// spec says space should be encoded as '+'
+	str = str.replace(urlEncodedSpaceRE, ' ');
+	return decodeURIComponent(str);
+}
+
+function append(str, name, value) {
+	if (Array.isArray(value)) {
+		value.forEach(function (value) {
+			str = append(str, name, value);
+		});
+	} else {
+		if (str.length > 0) {
+			str += '&';
+		}
+		str += urlEncode(name);
+		if (value !== undefined && value !== null) {
+			str += '=' + urlEncode(value);
+		}
+	}
+	return str;
+}
+
+var xWwwFormUrlencoded = {
+
+	read: function read(str) {
+		var obj = {};
+		str.split('&').forEach(function (entry) {
+			var pair, name, value;
+			pair = entry.split('=');
+			name = urlDecode(pair[0]);
+			if (pair.length === 2) {
+				value = urlDecode(pair[1]);
+			} else {
+				value = null;
+			}
+			if (name in obj) {
+				if (!Array.isArray(obj[name])) {
+					// convert to an array, perserving currnent value
+					obj[name] = [obj[name]];
+				}
+				obj[name].push(value);
+			} else {
+				obj[name] = value;
+			}
+		});
+		return obj;
+	},
+
+	write: function write(obj) {
+		var str = '';
+		Object.keys(obj).forEach(function (name) {
+			str = append(str, name, obj[name]);
+		});
+		return str;
+	}
+
+};
+
+var mixin$3, xWWWFormURLEncoder, origin, urlRE, absoluteUrlRE, fullyQualifiedUrlRE;
+
+mixin$3 = mixin_1;
+xWWWFormURLEncoder = xWwwFormUrlencoded;
+
+urlRE = /([a-z][a-z0-9\+\-\.]*:)\/\/([^@]+@)?(([^:\/]+)(:([0-9]+))?)?(\/[^?#]*)?(\?[^#]*)?(#\S*)?/i;
+absoluteUrlRE = /^([a-z][a-z0-9\-\+\.]*:\/\/|\/)/i;
+fullyQualifiedUrlRE = /([a-z][a-z0-9\+\-\.]*:)\/\/([^@]+@)?(([^:\/]+)(:([0-9]+))?)?\//i;
+
+/**
+ * Apply params to the template to create a URL.
+ *
+ * Parameters that are not applied directly to the template, are appended
+ * to the URL as query string parameters.
+ *
+ * @param {string} template the URI template
+ * @param {Object} params parameters to apply to the template
+ * @return {string} the resulting URL
+ */
+function buildUrl(template, params) {
+	// internal builder to convert template with params.
+	var url$$1, name, queryStringParams, queryString, re;
+
+	url$$1 = template;
+	queryStringParams = {};
+
+	if (params) {
+		for (name in params) {
+			/*jshint forin:false */
+			re = new RegExp('\\{' + name + '\\}');
+			if (re.test(url$$1)) {
+				url$$1 = url$$1.replace(re, encodeURIComponent(params[name]), 'g');
+			} else {
+				queryStringParams[name] = params[name];
+			}
+		}
+
+		queryString = xWWWFormURLEncoder.write(queryStringParams);
+		if (queryString) {
+			url$$1 += url$$1.indexOf('?') === -1 ? '?' : '&';
+			url$$1 += queryString;
+		}
+	}
+	return url$$1;
+}
+
+function startsWith(str, test) {
+	return str.indexOf(test) === 0;
+}
+
+/**
+ * Create a new URL Builder
+ *
+ * @param {string|UrlBuilder} template the base template to build from, may be another UrlBuilder
+ * @param {Object} [params] base parameters
+ * @constructor
+ */
+function UrlBuilder(template, params) {
+	if (!(this instanceof UrlBuilder)) {
+		// invoke as a constructor
+		return new UrlBuilder(template, params);
+	}
+
+	if (template instanceof UrlBuilder) {
+		this._template = template.template;
+		this._params = mixin$3({}, this._params, params);
+	} else {
+		this._template = (template || '').toString();
+		this._params = params || {};
+	}
+}
+
+UrlBuilder.prototype = {
+
+	/**
+  * Create a new UrlBuilder instance that extends the current builder.
+  * The current builder is unmodified.
+  *
+  * @param {string} [template] URL template to append to the current template
+  * @param {Object} [params] params to combine with current params.  New params override existing params
+  * @return {UrlBuilder} the new builder
+  */
+	append: function append(template, params) {
+		// TODO consider query strings and fragments
+		return new UrlBuilder(this._template + template, mixin$3({}, this._params, params));
+	},
+
+	/**
+  * Create a new UrlBuilder with a fully qualified URL based on the
+  * window's location or base href and the current templates relative URL.
+  *
+  * Path variables are preserved.
+  *
+  * *Browser only*
+  *
+  * @return {UrlBuilder} the fully qualified URL template
+  */
+	fullyQualify: function fullyQualify() {
+		if (typeof location === 'undefined') {
+			return this;
+		}
+		if (this.isFullyQualified()) {
+			return this;
+		}
+
+		var template = this._template;
+
+		if (startsWith(template, '//')) {
+			template = origin.protocol + template;
+		} else if (startsWith(template, '/')) {
+			template = origin.origin + template;
+		} else if (!this.isAbsolute()) {
+			template = origin.origin + origin.pathname.substring(0, origin.pathname.lastIndexOf('/') + 1);
+		}
+
+		if (template.indexOf('/', 8) === -1) {
+			// default the pathname to '/'
+			template = template + '/';
+		}
+
+		return new UrlBuilder(template, this._params);
+	},
+
+	/**
+  * True if the URL is absolute
+  *
+  * @return {boolean}
+  */
+	isAbsolute: function isAbsolute() {
+		return absoluteUrlRE.test(this.build());
+	},
+
+	/**
+  * True if the URL is fully qualified
+  *
+  * @return {boolean}
+  */
+	isFullyQualified: function isFullyQualified() {
+		return fullyQualifiedUrlRE.test(this.build());
+	},
+
+	/**
+  * True if the URL is cross origin. The protocol, host and port must not be
+  * the same in order to be cross origin,
+  *
+  * @return {boolean}
+  */
+	isCrossOrigin: function isCrossOrigin() {
+		if (!origin) {
+			return true;
+		}
+		var url$$1 = this.parts();
+		return url$$1.protocol !== origin.protocol || url$$1.hostname !== origin.hostname || url$$1.port !== origin.port;
+	},
+
+	/**
+  * Split a URL into its consituent parts following the naming convention of
+  * 'window.location'. One difference is that the port will contain the
+  * protocol default if not specified.
+  *
+  * @see https://developer.mozilla.org/en-US/docs/DOM/window.location
+  *
+  * @returns {Object} a 'window.location'-like object
+  */
+	parts: function parts() {
+		/*jshint maxcomplexity:20 */
+		var url$$1, parts;
+		url$$1 = this.fullyQualify().build().match(urlRE);
+		parts = {
+			href: url$$1[0],
+			protocol: url$$1[1],
+			host: url$$1[3] || '',
+			hostname: url$$1[4] || '',
+			port: url$$1[6],
+			pathname: url$$1[7] || '',
+			search: url$$1[8] || '',
+			hash: url$$1[9] || ''
+		};
+		parts.origin = parts.protocol + '//' + parts.host;
+		parts.port = parts.port || (parts.protocol === 'https:' ? '443' : parts.protocol === 'http:' ? '80' : '');
+		return parts;
+	},
+
+	/**
+  * Expand the template replacing path variables with parameters
+  *
+  * @param {Object} [params] params to combine with current params.  New params override existing params
+  * @return {string} the expanded URL
+  */
+	build: function build(params) {
+		return buildUrl(this._template, mixin$3({}, this._params, params));
+	},
+
+	/**
+  * @see build
+  */
+	toString: function toString() {
+		return this.build();
+	}
+
+};
+
+origin = typeof location !== 'undefined' ? new UrlBuilder(location.href).parts() : void 0;
+
+var UrlBuilder_1 = UrlBuilder;
+
+var interceptor$2, UrlBuilder$1;
+
+interceptor$2 = interceptor_1;
+UrlBuilder$1 = UrlBuilder_1;
+
+function startsWith$1(str, prefix) {
+	return str.indexOf(prefix) === 0;
+}
+
+function endsWith(str, suffix) {
+	return str.lastIndexOf(suffix) + suffix.length === str.length;
+}
+
+/**
+ * Prefixes the request path with a common value.
+ *
+ * @param {Client} [client] client to wrap
+ * @param {number} [config.prefix] path prefix
+ *
+ * @returns {Client}
+ */
+var pathPrefix = interceptor$2({
+	request: function request(_request, config) {
+		var path;
+
+		if (config.prefix && !new UrlBuilder$1(_request.path).isFullyQualified()) {
+			path = config.prefix;
+			if (_request.path) {
+				if (!endsWith(path, '/') && !startsWith$1(_request.path, '/')) {
+					// add missing '/' between path sections
+					path += '/';
+				}
+				path += _request.path;
+			}
+			_request.path = path;
+		}
+
+		return _request;
+	}
+});
+
+/*
+* Copyright 2014-2016 the original author or authors
+* @license MIT, see LICENSE.txt for details
+*
+* @author Scott Andrews
+*/
+
+/**
+ * Parse a MIME type into it's constituent parts
+ *
+ * @param {string} mime MIME type to parse
+ * @return {{
+ *   {string} raw the original MIME type
+ *   {string} type the type and subtype
+ *   {string} [suffix] mime suffix, including the plus, if any
+ *   {Object} params key/value pair of attributes
+ * }}
+ */
+
+function parse(mime) {
+	var params, type;
+
+	params = mime.split(';');
+	type = params[0].trim().split('+');
+
+	return {
+		raw: mime,
+		type: type[0],
+		suffix: type[1] ? '+' + type[1] : '',
+		params: params.slice(1).reduce(function (params, pair) {
+			pair = pair.split('=');
+			params[pair[0].trim()] = pair[1] ? pair[1].trim() : void 0;
+			return params;
+		}, {})
+	};
+}
+
+var mime = {
+	parse: parse
+};
+
+/*
+ * Copyright 2015-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+var charMap;
+
+charMap = function () {
+	var strings = {
+		alpha: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+		digit: '0123456789'
+	};
+
+	strings.genDelims = ':/?#[]@';
+	strings.subDelims = '!$&\'()*+,;=';
+	strings.reserved = strings.genDelims + strings.subDelims;
+	strings.unreserved = strings.alpha + strings.digit + '-._~';
+	strings.url = strings.reserved + strings.unreserved;
+	strings.scheme = strings.alpha + strings.digit + '+-.';
+	strings.userinfo = strings.unreserved + strings.subDelims + ':';
+	strings.host = strings.unreserved + strings.subDelims;
+	strings.port = strings.digit;
+	strings.pchar = strings.unreserved + strings.subDelims + ':@';
+	strings.segment = strings.pchar;
+	strings.path = strings.segment + '/';
+	strings.query = strings.pchar + '/?';
+	strings.fragment = strings.pchar + '/?';
+
+	return Object.keys(strings).reduce(function (charMap, set) {
+		charMap[set] = strings[set].split('').reduce(function (chars, myChar) {
+			chars[myChar] = true;
+			return chars;
+		}, {});
+		return charMap;
+	}, {});
+}();
+
+function encode(str, allowed) {
+	if (typeof str !== 'string') {
+		throw new Error('String required for URL encoding');
+	}
+	return str.split('').map(function (myChar) {
+		if (allowed.hasOwnProperty(myChar)) {
+			return myChar;
+		}
+		var code = myChar.charCodeAt(0);
+		if (code <= 127) {
+			var encoded = code.toString(16).toUpperCase();
+			return '%' + (encoded.length % 2 === 1 ? '0' : '') + encoded;
+		} else {
+			return encodeURIComponent(myChar).toUpperCase();
+		}
+	}).join('');
+}
+
+function makeEncoder(allowed) {
+	allowed = allowed || charMap.unreserved;
+	return function (str) {
+		return encode(str, allowed);
+	};
+}
+
+function decode(str) {
+	return decodeURIComponent(str);
+}
+
+var uriEncoder = {
+
+	/*
+  * Decode URL encoded strings
+  *
+  * @param {string} URL encoded string
+  * @returns {string} URL decoded string
+  */
+	decode: decode,
+
+	/*
+  * URL encode a string
+  *
+  * All but alpha-numerics and a very limited set of punctuation - . _ ~ are
+  * encoded.
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encode: makeEncoder(),
+
+	/*
+ * URL encode a URL
+ *
+ * All character permitted anywhere in a URL are left unencoded even
+ * if that character is not permitted in that portion of a URL.
+ *
+ * Note: This method is typically not what you want.
+ *
+ * @param {string} string to encode
+ * @returns {string} URL encoded string
+ */
+	encodeURL: makeEncoder(charMap.url),
+
+	/*
+  * URL encode the scheme portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodeScheme: makeEncoder(charMap.scheme),
+
+	/*
+  * URL encode the user info portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodeUserInfo: makeEncoder(charMap.userinfo),
+
+	/*
+  * URL encode the host portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodeHost: makeEncoder(charMap.host),
+
+	/*
+  * URL encode the port portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodePort: makeEncoder(charMap.port),
+
+	/*
+  * URL encode a path segment portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodePathSegment: makeEncoder(charMap.segment),
+
+	/*
+  * URL encode the path portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodePath: makeEncoder(charMap.path),
+
+	/*
+  * URL encode the query portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodeQuery: makeEncoder(charMap.query),
+
+	/*
+  * URL encode the fragment portion of a URL
+  *
+  * @param {string} string to encode
+  * @returns {string} URL encoded string
+  */
+	encodeFragment: makeEncoder(charMap.fragment)
+
+};
+
+var _typeof$1 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var uriEncoder$1, operations, prefixRE;
+
+uriEncoder$1 = uriEncoder;
+
+prefixRE = /^([^:]*):([0-9]+)$/;
+operations = {
+	'': { first: '', separator: ',', named: false, empty: '', encoder: uriEncoder$1.encode },
+	'+': { first: '', separator: ',', named: false, empty: '', encoder: uriEncoder$1.encodeURL },
+	'#': { first: '#', separator: ',', named: false, empty: '', encoder: uriEncoder$1.encodeURL },
+	'.': { first: '.', separator: '.', named: false, empty: '', encoder: uriEncoder$1.encode },
+	'/': { first: '/', separator: '/', named: false, empty: '', encoder: uriEncoder$1.encode },
+	';': { first: ';', separator: ';', named: true, empty: '', encoder: uriEncoder$1.encode },
+	'?': { first: '?', separator: '&', named: true, empty: '=', encoder: uriEncoder$1.encode },
+	'&': { first: '&', separator: '&', named: true, empty: '=', encoder: uriEncoder$1.encode },
+	'=': { reserved: true },
+	',': { reserved: true },
+	'!': { reserved: true },
+	'@': { reserved: true },
+	'|': { reserved: true }
+};
+
+function apply(operation, expression, params) {
+	/*jshint maxcomplexity:11 */
+	return expression.split(',').reduce(function (result, variable) {
+		var opts, value;
+
+		opts = {};
+		if (variable.slice(-1) === '*') {
+			variable = variable.slice(0, -1);
+			opts.explode = true;
+		}
+		if (prefixRE.test(variable)) {
+			var prefix = prefixRE.exec(variable);
+			variable = prefix[1];
+			opts.maxLength = parseInt(prefix[2]);
+		}
+
+		variable = uriEncoder$1.decode(variable);
+		value = params[variable];
+
+		if (value === void 0 || value === null) {
+			return result;
+		}
+		if (Array.isArray(value)) {
+			result = value.reduce(function (result, value) {
+				if (result.length) {
+					result += opts.explode ? operation.separator : ',';
+					if (operation.named && opts.explode) {
+						result += operation.encoder(variable);
+						result += value.length ? '=' : operation.empty;
+					}
+				} else {
+					result += operation.first;
+					if (operation.named) {
+						result += operation.encoder(variable);
+						result += value.length ? '=' : operation.empty;
+					}
+				}
+				result += operation.encoder(value);
+				return result;
+			}, result);
+		} else if ((typeof value === 'undefined' ? 'undefined' : _typeof$1(value)) === 'object') {
+			result = Object.keys(value).reduce(function (result, name) {
+				if (result.length) {
+					result += opts.explode ? operation.separator : ',';
+				} else {
+					result += operation.first;
+					if (operation.named && !opts.explode) {
+						result += operation.encoder(variable);
+						result += value[name].length ? '=' : operation.empty;
+					}
+				}
+				result += operation.encoder(name);
+				result += opts.explode ? '=' : ',';
+				result += operation.encoder(value[name]);
+				return result;
+			}, result);
+		} else {
+			value = String(value);
+			if (opts.maxLength) {
+				value = value.slice(0, opts.maxLength);
+			}
+			result += result.length ? operation.separator : operation.first;
+			if (operation.named) {
+				result += operation.encoder(variable);
+				result += value.length ? '=' : operation.empty;
+			}
+			result += operation.encoder(value);
+		}
+
+		return result;
+	}, '');
+}
+
+function expandExpression(expression, params) {
+	var operation;
+
+	operation = operations[expression.slice(0, 1)];
+	if (operation) {
+		expression = expression.slice(1);
+	} else {
+		operation = operations[''];
+	}
+
+	if (operation.reserved) {
+		throw new Error('Reserved expression operations are not supported');
+	}
+
+	return apply(operation, expression, params);
+}
+
+function expandTemplate(template, params) {
+	var start, end, uri;
+
+	uri = '';
+	end = 0;
+	while (true) {
+		start = template.indexOf('{', end);
+		if (start === -1) {
+			// no more expressions
+			uri += template.slice(end);
+			break;
+		}
+		uri += template.slice(end, start);
+		end = template.indexOf('}', start) + 1;
+		uri += expandExpression(template.slice(start + 1, end - 1), params);
+	}
+
+	return uri;
+}
+
+var uriTemplate = {
+
+	/**
+  * Expand a URI Template with parameters to form a URI.
+  *
+  * Full implementation (level 4) of rfc6570.
+  * @see https://tools.ietf.org/html/rfc6570
+  *
+  * @param {string} template URI template
+  * @param {Object} [params] params to apply to the template durring expantion
+  * @returns {string} expanded URI
+  */
+	expand: expandTemplate
+
+};
+
+var interceptor$3, uriTemplate$1, mixin$4;
+
+interceptor$3 = interceptor_1;
+uriTemplate$1 = uriTemplate;
+mixin$4 = mixin_1;
+
+/**
+ * Applies request params to the path as a URI Template
+ *
+ * Params are removed from the request object, as they have been consumed.
+ *
+ * @see https://tools.ietf.org/html/rfc6570
+ *
+ * @param {Client} [client] client to wrap
+ * @param {Object} [config.params] default param values
+ * @param {string} [config.template] default template
+ *
+ * @returns {Client}
+ */
+var template = interceptor$3({
+  init: function init(config) {
+    config.params = config.params || {};
+    config.template = config.template || '';
+    return config;
+  },
+  request: function request(_request, config) {
+    var template, params;
+
+    template = _request.path || config.template;
+    params = mixin$4({}, _request.params, config.params);
+
+    _request.path = uriTemplate$1.expand(template, params);
+    delete _request.params;
+
+    return _request;
+  }
+});
+
+/*
+ * Copyright 2013-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+var _typeof$2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var find = {
+
+	/**
+  * Find objects within a graph the contain a property of a certain name.
+  *
+  * NOTE: this method will not discover object graph cycles.
+  *
+  * @param {*} obj object to search on
+  * @param {string} prop name of the property to search for
+  * @param {Function} callback function to receive the found properties and their parent
+  */
+	findProperties: function findProperties(obj, prop, callback) {
+		if ((typeof obj === 'undefined' ? 'undefined' : _typeof$2(obj)) !== 'object' || obj === null) {
+			return;
+		}
+		if (prop in obj) {
+			callback(obj[prop], obj, prop);
+		}
+		Object.keys(obj).forEach(function (key) {
+			findProperties(obj[key], prop, callback);
+		});
+	}
+
+};
+
+/*
+ * Copyright 2015-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+/**
+ * Attempt to invoke a function capturing the resulting value as a Promise
+ *
+ * If the method throws, the caught value used to reject the Promise.
+ *
+ * @param {function} work function to invoke
+ * @returns {Promise} Promise for the output of the work function
+ */
+
+function attempt(work) {
+  try {
+    return Promise.resolve(work());
+  } catch (e) {
+    return Promise.reject(e);
+  }
+}
+
+var attempt_1 = attempt;
+
+/**
+ * Create a promise whose work is started only when a handler is registered.
+ *
+ * The work function will be invoked at most once. Thrown values will result
+ * in promise rejection.
+ *
+ * @param {Function} work function whose ouput is used to resolve the
+ *   returned promise.
+ * @returns {Promise} a lazy promise
+ */
+function lazyPromise(work) {
+	var started, resolver, promise, then;
+
+	started = false;
+
+	promise = new Promise(function (resolve, reject) {
+		resolver = {
+			resolve: resolve,
+			reject: reject
+		};
+	});
+	then = promise.then;
+
+	promise.then = function () {
+		if (!started) {
+			started = true;
+			attempt_1(work).then(resolver.resolve, resolver.reject);
+		}
+		return then.apply(promise, arguments);
+	};
+
+	return promise;
+}
+
+var lazyPromise_1 = lazyPromise;
+
+var pathPrefix$1, template$1, find$1, lazyPromise$1, responsePromise$3;
+
+pathPrefix$1 = pathPrefix;
+template$1 = template;
+find$1 = find;
+lazyPromise$1 = lazyPromise_1;
+responsePromise$3 = responsePromise_1;
+
+function defineProperty(obj, name, value) {
+	Object.defineProperty(obj, name, {
+		value: value,
+		configurable: true,
+		enumerable: false,
+		writeable: true
+	});
+}
+
+/**
+ * Hypertext Application Language serializer
+ *
+ * Implemented to https://tools.ietf.org/html/draft-kelly-json-hal-06
+ *
+ * As the spec is still a draft, this implementation will be updated as the
+ * spec evolves
+ *
+ * Objects are read as HAL indexing links and embedded objects on to the
+ * resource. Objects are written as plain JSON.
+ *
+ * Embedded relationships are indexed onto the resource by the relationship
+ * as a promise for the related resource.
+ *
+ * Links are indexed onto the resource as a lazy promise that will GET the
+ * resource when a handler is first registered on the promise.
+ *
+ * A `requestFor` method is added to the entity to make a request for the
+ * relationship.
+ *
+ * A `clientFor` method is added to the entity to get a full Client for a
+ * relationship.
+ *
+ * The `_links` and `_embedded` properties on the resource are made
+ * non-enumerable.
+ */
+var hal = {
+
+	read: function read(str, opts) {
+		var client, console;
+
+		opts = opts || {};
+		client = opts.client;
+		console = opts.console || console;
+
+		function deprecationWarning(relationship, deprecation) {
+			if (deprecation && console && console.warn || console.log) {
+				(console.warn || console.log).call(console, 'Relationship \'' + relationship + '\' is deprecated, see ' + deprecation);
+			}
+		}
+
+		return opts.registry.lookup(opts.mime.suffix).then(function (converter) {
+			return converter.read(str, opts);
+		}).then(function (root) {
+			find$1.findProperties(root, '_embedded', function (embedded, resource, name) {
+				Object.keys(embedded).forEach(function (relationship) {
+					if (relationship in resource) {
+						return;
+					}
+					var related = responsePromise$3({
+						entity: embedded[relationship]
+					});
+					defineProperty(resource, relationship, related);
+				});
+				defineProperty(resource, name, embedded);
+			});
+			find$1.findProperties(root, '_links', function (links, resource, name) {
+				Object.keys(links).forEach(function (relationship) {
+					var link = links[relationship];
+					if (relationship in resource) {
+						return;
+					}
+					defineProperty(resource, relationship, responsePromise$3.make(lazyPromise$1(function () {
+						if (link.deprecation) {
+							deprecationWarning(relationship, link.deprecation);
+						}
+						if (link.templated === true) {
+							return template$1(client)({ path: link.href });
+						}
+						return client({ path: link.href });
+					})));
+				});
+				defineProperty(resource, name, links);
+				defineProperty(resource, 'clientFor', function (relationship, clientOverride) {
+					var link = links[relationship];
+					if (!link) {
+						throw new Error('Unknown relationship: ' + relationship);
+					}
+					if (link.deprecation) {
+						deprecationWarning(relationship, link.deprecation);
+					}
+					if (link.templated === true) {
+						return template$1(clientOverride || client, { template: link.href });
+					}
+					return pathPrefix$1(clientOverride || client, { prefix: link.href });
+				});
+				defineProperty(resource, 'requestFor', function (relationship, request, clientOverride) {
+					var client = this.clientFor(relationship, clientOverride);
+					return client(request);
+				});
+			});
+
+			return root;
+		});
+	},
+
+	write: function write(obj, opts) {
+		return opts.registry.lookup(opts.mime.suffix).then(function (converter) {
+			return converter.write(obj, opts);
+		});
+	}
+
+};
+
+/*
+ * Copyright 2012-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+/**
+ * Create a new JSON converter with custom reviver/replacer.
+ *
+ * The extended converter must be published to a MIME registry in order
+ * to be used. The existing converter will not be modified.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
+ *
+ * @param {function} [reviver=undefined] custom JSON.parse reviver
+ * @param {function|Array} [replacer=undefined] custom JSON.stringify replacer
+ */
+
+function createConverter(reviver, replacer) {
+  return {
+
+    read: function read(str) {
+      return JSON.parse(str, reviver);
+    },
+
+    write: function write(obj) {
+      return JSON.stringify(obj, replacer);
+    },
+
+    extend: createConverter
+
+  };
+}
+
+var json = createConverter();
+
+/*
+ * Copyright 2014-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Michael Jackson
+ */
+
+var _typeof$3 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function isFormElement(object) {
+	return object && object.nodeType === 1 && // Node.ELEMENT_NODE
+	object.tagName === 'FORM';
+}
+
+function createFormDataFromObject(object) {
+	var formData = new FormData();
+
+	var value;
+	for (var property in object) {
+		if (object.hasOwnProperty(property)) {
+			value = object[property];
+
+			if (value instanceof File) {
+				formData.append(property, value, value.name);
+			} else if (value instanceof Blob) {
+				formData.append(property, value);
+			} else {
+				formData.append(property, String(value));
+			}
+		}
+	}
+
+	return formData;
+}
+
+var formData = {
+
+	write: function write(object) {
+		if (typeof FormData === 'undefined') {
+			throw new Error('The multipart/form-data mime serializer requires FormData support');
+		}
+
+		// Support FormData directly.
+		if (object instanceof FormData) {
+			return object;
+		}
+
+		// Support <form> elements.
+		if (isFormElement(object)) {
+			return new FormData(object);
+		}
+
+		// Support plain objects, may contain File/Blob as value.
+		if ((typeof object === 'undefined' ? 'undefined' : _typeof$3(object)) === 'object' && object !== null) {
+			return createFormDataFromObject(object);
+		}
+
+		throw new Error('Unable to create FormData from object ' + object);
+	}
+
+};
+
+/*
+ * Copyright 2012-2016 the original author or authors
+ * @license MIT, see LICENSE.txt for details
+ *
+ * @author Scott Andrews
+ */
+
+var plain = {
+
+	read: function read(str) {
+		return str;
+	},
+
+	write: function write(obj) {
+		return obj.toString();
+	}
+
+};
+
+var mime$1, registry;
+
+mime$1 = mime;
+
+function Registry(mimes) {
+
+	/**
+  * Lookup the converter for a MIME type
+  *
+  * @param {string} type the MIME type
+  * @return a promise for the converter
+  */
+	this.lookup = function lookup(type) {
+		var parsed;
+
+		parsed = typeof type === 'string' ? mime$1.parse(type) : type;
+
+		if (mimes[parsed.raw]) {
+			return mimes[parsed.raw];
+		}
+		if (mimes[parsed.type + parsed.suffix]) {
+			return mimes[parsed.type + parsed.suffix];
+		}
+		if (mimes[parsed.type]) {
+			return mimes[parsed.type];
+		}
+		if (mimes[parsed.suffix]) {
+			return mimes[parsed.suffix];
+		}
+
+		return Promise.reject(new Error('Unable to locate converter for mime "' + parsed.raw + '"'));
+	};
+
+	/**
+  * Create a late dispatched proxy to the target converter.
+  *
+  * Common when a converter is registered under multiple names and
+  * should be kept in sync if updated.
+  *
+  * @param {string} type mime converter to dispatch to
+  * @returns converter whose read/write methods target the desired mime converter
+  */
+	this.delegate = function delegate(type) {
+		return {
+			read: function () {
+				var args = arguments;
+				return this.lookup(type).then(function (converter) {
+					return converter.read.apply(this, args);
+				}.bind(this));
+			}.bind(this),
+			write: function () {
+				var args = arguments;
+				return this.lookup(type).then(function (converter) {
+					return converter.write.apply(this, args);
+				}.bind(this));
+			}.bind(this)
+		};
+	};
+
+	/**
+  * Register a custom converter for a MIME type
+  *
+  * @param {string} type the MIME type
+  * @param converter the converter for the MIME type
+  * @return a promise for the converter
+  */
+	this.register = function register(type, converter) {
+		mimes[type] = Promise.resolve(converter);
+		return mimes[type];
+	};
+
+	/**
+  * Create a child registry whoes registered converters remain local, while
+  * able to lookup converters from its parent.
+  *
+  * @returns child MIME registry
+  */
+	this.child = function child() {
+		return new Registry(Object.create(mimes));
+	};
+}
+
+registry = new Registry({});
+
+// include provided serializers
+registry.register('application/hal', hal);
+registry.register('application/json', json);
+registry.register('application/x-www-form-urlencoded', xWwwFormUrlencoded);
+registry.register('multipart/form-data', formData);
+registry.register('text/plain', plain);
+
+registry.register('+json', registry.delegate('application/json'));
+
+var registry_1 = registry;
+
+var interceptor$4, mime$2, registry$1, noopConverter, missingConverter, attempt$1;
+
+interceptor$4 = interceptor_1;
+mime$2 = mime;
+registry$1 = registry_1;
+attempt$1 = attempt_1;
+
+noopConverter = {
+	read: function read(obj) {
+		return obj;
+	},
+	write: function write(obj) {
+		return obj;
+	}
+};
+
+missingConverter = {
+	read: function read() {
+		throw 'No read method found on converter';
+	},
+	write: function write() {
+		throw 'No write method found on converter';
+	}
+};
+
+/**
+ * MIME type support for request and response entities.  Entities are
+ * (de)serialized using the converter for the MIME type.
+ *
+ * Request entities are converted using the desired converter and the
+ * 'Accept' request header prefers this MIME.
+ *
+ * Response entities are converted based on the Content-Type response header.
+ *
+ * @param {Client} [client] client to wrap
+ * @param {string} [config.mime='text/plain'] MIME type to encode the request
+ *   entity
+ * @param {string} [config.accept] Accept header for the request
+ * @param {Client} [config.client=<request.originator>] client passed to the
+ *   converter, defaults to the client originating the request
+ * @param {Registry} [config.registry] MIME registry, defaults to the root
+ *   registry
+ * @param {boolean} [config.permissive] Allow an unkown request MIME type
+ *
+ * @returns {Client}
+ */
+var mime_1$1 = interceptor$4({
+	init: function init(config) {
+		config.registry = config.registry || registry$1;
+		return config;
+	},
+	request: function request(_request, config) {
+		var type, headers;
+
+		headers = _request.headers || (_request.headers = {});
+		type = mime$2.parse(headers['Content-Type'] || config.mime || 'text/plain');
+		headers.Accept = headers.Accept || config.accept || type.raw + ', application/json;q=0.8, text/plain;q=0.5, */*;q=0.2';
+
+		if (!('entity' in _request)) {
+			return _request;
+		}
+
+		headers['Content-Type'] = type.raw;
+
+		return config.registry.lookup(type)['catch'](function () {
+			// failed to resolve converter
+			if (config.permissive) {
+				return noopConverter;
+			}
+			throw 'mime-unknown';
+		}).then(function (converter) {
+			var client = config.client || _request.originator,
+			    write = converter.write || missingConverter.write;
+
+			return attempt$1(write.bind(void 0, _request.entity, { client: client, request: _request, mime: type, registry: config.registry }))['catch'](function () {
+				throw 'mime-serialization';
+			}).then(function (entity) {
+				_request.entity = entity;
+				return _request;
+			});
+		});
+	},
+	response: function response(_response, config) {
+		if (!(_response.headers && _response.headers['Content-Type'] && _response.entity)) {
+			return _response;
+		}
+
+		var type = mime$2.parse(_response.headers['Content-Type']);
+
+		return config.registry.lookup(type)['catch'](function () {
+			return noopConverter;
+		}).then(function (converter) {
+			var client = config.client || _response.request && _response.request.originator,
+			    read = converter.read || missingConverter.read;
+
+			return attempt$1(read.bind(void 0, _response.entity, { client: client, response: _response, mime: type, registry: config.registry }))['catch'](function (e) {
+				_response.error = 'mime-deserialization';
+				_response.cause = e;
+				throw _response;
+			}).then(function (entity) {
+				_response.entity = entity;
+				return _response;
+			});
+		});
+	}
+});
+
+var interceptor$5, mixinUtil, defaulter;
+
+interceptor$5 = interceptor_1;
+mixinUtil = mixin_1;
+
+defaulter = function () {
+
+	function mixin(prop, target, defaults) {
+		if (prop in target || prop in defaults) {
+			target[prop] = mixinUtil({}, defaults[prop], target[prop]);
+		}
+	}
+
+	function copy(prop, target, defaults) {
+		if (prop in defaults && !(prop in target)) {
+			target[prop] = defaults[prop];
+		}
+	}
+
+	var mappings = {
+		method: copy,
+		path: copy,
+		params: mixin,
+		headers: mixin,
+		entity: copy,
+		mixin: mixin
+	};
+
+	return function (target, defaults) {
+		for (var prop in mappings) {
+			/*jshint forin: false */
+			mappings[prop](prop, target, defaults);
+		}
+		return target;
+	};
+}();
+
+/**
+ * Provide default values for a request. These values will be applied to the
+ * request if the request object does not already contain an explicit value.
+ *
+ * For 'params', 'headers', and 'mixin', individual values are mixed in with the
+ * request's values. The result is a new object representiing the combined
+ * request and config values. Neither input object is mutated.
+ *
+ * @param {Client} [client] client to wrap
+ * @param {string} [config.method] the default method
+ * @param {string} [config.path] the default path
+ * @param {Object} [config.params] the default params, mixed with the request's existing params
+ * @param {Object} [config.headers] the default headers, mixed with the request's existing headers
+ * @param {Object} [config.mixin] the default "mixins" (http/https options), mixed with the request's existing "mixins"
+ *
+ * @returns {Client}
+ */
+var defaultRequest = interceptor$5({
+	request: function handleRequest(request, config) {
+		return defaulter(request, config);
+	}
+});
+
+var rfc5988 = function () {
+  /*
+   * Generated by PEG.js 0.7.0.
+   *
+   * http://pegjs.majda.cz/
+   */
+
+  function quote(s) {
+    /*
+     * ECMA-262, 5th ed., 7.8.4: All characters may appear literally in a
+     * string literal except for the closing quote character, backslash,
+     * carriage return, line separator, paragraph separator, and line feed.
+     * Any character may appear in the form of an escape sequence.
+     *
+     * For portability, we also escape escape all control and non-ASCII
+     * characters. Note that "\0" and "\v" escape sequences are not used
+     * because JSHint does not like the first and IE the second.
+     */
+    return '"' + s.replace(/\\/g, '\\\\') // backslash
+    .replace(/"/g, '\\"') // closing quote character
+    .replace(/\x08/g, '\\b') // backspace
+    .replace(/\t/g, '\\t') // horizontal tab
+    .replace(/\n/g, '\\n') // line feed
+    .replace(/\f/g, '\\f') // form feed
+    .replace(/\r/g, '\\r') // carriage return
+    .replace(/[\x00-\x07\x0B\x0E-\x1F\x80-\uFFFF]/g, escape) + '"';
+  }
+
+  var result = {
+    /*
+     * Parses the input with a generated parser. If the parsing is successfull,
+     * returns a value explicitly or implicitly specified by the grammar from
+     * which the parser was generated (see |PEG.buildParser|). If the parsing is
+     * unsuccessful, throws |PEG.parser.SyntaxError| describing the error.
+     */
+    parse: function parse(input, startRule) {
+      var parseFunctions = {
+        "start": parse_start,
+        "LinkValue": parse_LinkValue,
+        "LinkParams": parse_LinkParams,
+        "URIReference": parse_URIReference,
+        "LinkParam": parse_LinkParam,
+        "LinkParamName": parse_LinkParamName,
+        "LinkParamValue": parse_LinkParamValue,
+        "PToken": parse_PToken,
+        "PTokenChar": parse_PTokenChar,
+        "OptionalSP": parse_OptionalSP,
+        "QuotedString": parse_QuotedString,
+        "QuotedStringInternal": parse_QuotedStringInternal,
+        "Char": parse_Char,
+        "UpAlpha": parse_UpAlpha,
+        "LoAlpha": parse_LoAlpha,
+        "Alpha": parse_Alpha,
+        "Digit": parse_Digit,
+        "SP": parse_SP,
+        "DQ": parse_DQ,
+        "QDText": parse_QDText,
+        "QuotedPair": parse_QuotedPair
+      };
+
+      if (startRule !== undefined) {
+        if (parseFunctions[startRule] === undefined) {
+          throw new Error("Invalid rule name: " + quote(startRule) + ".");
+        }
+      } else {
+        startRule = "start";
+      }
+
+      var pos = 0;
+      var rightmostFailuresPos = 0;
+      var rightmostFailuresExpected = [];
+
+      function matchFailed(failure) {
+        if (pos < rightmostFailuresPos) {
+          return;
+        }
+
+        if (pos > rightmostFailuresPos) {
+          rightmostFailuresPos = pos;
+          rightmostFailuresExpected = [];
+        }
+
+        rightmostFailuresExpected.push(failure);
+      }
+
+      function parse_start() {
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1, pos2, pos3;
+
+        pos0 = pos;
+        pos1 = pos;
+        result0 = [];
+        pos2 = pos;
+        pos3 = pos;
+        result1 = parse_LinkValue();
+        if (result1 !== null) {
+          result2 = parse_OptionalSP();
+          if (result2 !== null) {
+            if (input.charCodeAt(pos) === 44) {
+              result3 = ",";
+              pos++;
+            } else {
+              result3 = null;
+              {
+                matchFailed("\",\"");
+              }
+            }
+            if (result3 !== null) {
+              result4 = parse_OptionalSP();
+              if (result4 !== null) {
+                result1 = [result1, result2, result3, result4];
+              } else {
+                result1 = null;
+                pos = pos3;
+              }
+            } else {
+              result1 = null;
+              pos = pos3;
+            }
+          } else {
+            result1 = null;
+            pos = pos3;
+          }
+        } else {
+          result1 = null;
+          pos = pos3;
+        }
+        if (result1 !== null) {
+          result1 = function (offset, i) {
+            return i;
+          }(pos2, result1[0]);
+        }
+        if (result1 === null) {
+          pos = pos2;
+        }
+        while (result1 !== null) {
+          result0.push(result1);
+          pos2 = pos;
+          pos3 = pos;
+          result1 = parse_LinkValue();
+          if (result1 !== null) {
+            result2 = parse_OptionalSP();
+            if (result2 !== null) {
+              if (input.charCodeAt(pos) === 44) {
+                result3 = ",";
+                pos++;
+              } else {
+                result3 = null;
+                {
+                  matchFailed("\",\"");
+                }
+              }
+              if (result3 !== null) {
+                result4 = parse_OptionalSP();
+                if (result4 !== null) {
+                  result1 = [result1, result2, result3, result4];
+                } else {
+                  result1 = null;
+                  pos = pos3;
+                }
+              } else {
+                result1 = null;
+                pos = pos3;
+              }
+            } else {
+              result1 = null;
+              pos = pos3;
+            }
+          } else {
+            result1 = null;
+            pos = pos3;
+          }
+          if (result1 !== null) {
+            result1 = function (offset, i) {
+              return i;
+            }(pos2, result1[0]);
+          }
+          if (result1 === null) {
+            pos = pos2;
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_LinkValue();
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, start, last) {
+            return start.concat([last]);
+          }(pos0, result0[0], result0[1]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_LinkValue() {
+        var result0, result1, result2, result3, result4, result5;
+        var pos0, pos1;
+
+        pos0 = pos;
+        pos1 = pos;
+        if (input.charCodeAt(pos) === 60) {
+          result0 = "<";
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("\"<\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_URIReference();
+          if (result1 !== null) {
+            if (input.charCodeAt(pos) === 62) {
+              result2 = ">";
+              pos++;
+            } else {
+              result2 = null;
+              {
+                matchFailed("\">\"");
+              }
+            }
+            if (result2 !== null) {
+              result3 = parse_OptionalSP();
+              if (result3 !== null) {
+                result4 = [];
+                result5 = parse_LinkParams();
+                while (result5 !== null) {
+                  result4.push(result5);
+                  result5 = parse_LinkParams();
+                }
+                if (result4 !== null) {
+                  result0 = [result0, result1, result2, result3, result4];
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, href, params) {
+            var link = {};
+            params.forEach(function (param) {
+              link[param[0]] = param[1];
+            });
+            link.href = href;
+            return link;
+          }(pos0, result0[1], result0[4]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_LinkParams() {
+        var result0, result1, result2, result3;
+        var pos0, pos1;
+
+        pos0 = pos;
+        pos1 = pos;
+        if (input.charCodeAt(pos) === 59) {
+          result0 = ";";
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("\";\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_OptionalSP();
+          if (result1 !== null) {
+            result2 = parse_LinkParam();
+            if (result2 !== null) {
+              result3 = parse_OptionalSP();
+              if (result3 !== null) {
+                result0 = [result0, result1, result2, result3];
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, param) {
+            return param;
+          }(pos0, result0[2]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_URIReference() {
+        var result0, result1;
+        var pos0;
+
+        pos0 = pos;
+        if (/^[^>]/.test(input.charAt(pos))) {
+          result1 = input.charAt(pos);
+          pos++;
+        } else {
+          result1 = null;
+          {
+            matchFailed("[^>]");
+          }
+        }
+        if (result1 !== null) {
+          result0 = [];
+          while (result1 !== null) {
+            result0.push(result1);
+            if (/^[^>]/.test(input.charAt(pos))) {
+              result1 = input.charAt(pos);
+              pos++;
+            } else {
+              result1 = null;
+              {
+                matchFailed("[^>]");
+              }
+            }
+          }
+        } else {
+          result0 = null;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, url$$1) {
+            return url$$1.join('');
+          }(pos0, result0);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_LinkParam() {
+        var result0, result1;
+        var pos0, pos1;
+
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_LinkParamName();
+        if (result0 !== null) {
+          result1 = parse_LinkParamValue();
+          result1 = result1 !== null ? result1 : "";
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, name, value) {
+            return [name, value];
+          }(pos0, result0[0], result0[1]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_LinkParamName() {
+        var result0, result1;
+        var pos0;
+
+        pos0 = pos;
+        if (/^[a-z]/.test(input.charAt(pos))) {
+          result1 = input.charAt(pos);
+          pos++;
+        } else {
+          result1 = null;
+          {
+            matchFailed("[a-z]");
+          }
+        }
+        if (result1 !== null) {
+          result0 = [];
+          while (result1 !== null) {
+            result0.push(result1);
+            if (/^[a-z]/.test(input.charAt(pos))) {
+              result1 = input.charAt(pos);
+              pos++;
+            } else {
+              result1 = null;
+              {
+                matchFailed("[a-z]");
+              }
+            }
+          }
+        } else {
+          result0 = null;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, name) {
+            return name.join('');
+          }(pos0, result0);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_LinkParamValue() {
+        var result0, result1;
+        var pos0, pos1;
+
+        pos0 = pos;
+        pos1 = pos;
+        if (input.charCodeAt(pos) === 61) {
+          result0 = "=";
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("\"=\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_PToken();
+          if (result1 === null) {
+            result1 = parse_QuotedString();
+          }
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, str) {
+            return str;
+          }(pos0, result0[1]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_PToken() {
+        var result0, result1;
+        var pos0;
+
+        pos0 = pos;
+        result1 = parse_PTokenChar();
+        if (result1 !== null) {
+          result0 = [];
+          while (result1 !== null) {
+            result0.push(result1);
+            result1 = parse_PTokenChar();
+          }
+        } else {
+          result0 = null;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, token) {
+            return token.join('');
+          }(pos0, result0);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_PTokenChar() {
+        var result0;
+
+        if (input.charCodeAt(pos) === 33) {
+          result0 = "!";
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("\"!\"");
+          }
+        }
+        if (result0 === null) {
+          if (input.charCodeAt(pos) === 35) {
+            result0 = "#";
+            pos++;
+          } else {
+            result0 = null;
+            {
+              matchFailed("\"#\"");
+            }
+          }
+          if (result0 === null) {
+            if (input.charCodeAt(pos) === 36) {
+              result0 = "$";
+              pos++;
+            } else {
+              result0 = null;
+              {
+                matchFailed("\"$\"");
+              }
+            }
+            if (result0 === null) {
+              if (input.charCodeAt(pos) === 37) {
+                result0 = "%";
+                pos++;
+              } else {
+                result0 = null;
+                {
+                  matchFailed("\"%\"");
+                }
+              }
+              if (result0 === null) {
+                if (input.charCodeAt(pos) === 38) {
+                  result0 = "&";
+                  pos++;
+                } else {
+                  result0 = null;
+                  {
+                    matchFailed("\"&\"");
+                  }
+                }
+                if (result0 === null) {
+                  if (input.charCodeAt(pos) === 39) {
+                    result0 = "'";
+                    pos++;
+                  } else {
+                    result0 = null;
+                    {
+                      matchFailed("\"'\"");
+                    }
+                  }
+                  if (result0 === null) {
+                    if (input.charCodeAt(pos) === 40) {
+                      result0 = "(";
+                      pos++;
+                    } else {
+                      result0 = null;
+                      {
+                        matchFailed("\"(\"");
+                      }
+                    }
+                    if (result0 === null) {
+                      if (input.charCodeAt(pos) === 41) {
+                        result0 = ")";
+                        pos++;
+                      } else {
+                        result0 = null;
+                        {
+                          matchFailed("\")\"");
+                        }
+                      }
+                      if (result0 === null) {
+                        if (input.charCodeAt(pos) === 42) {
+                          result0 = "*";
+                          pos++;
+                        } else {
+                          result0 = null;
+                          {
+                            matchFailed("\"*\"");
+                          }
+                        }
+                        if (result0 === null) {
+                          if (input.charCodeAt(pos) === 43) {
+                            result0 = "+";
+                            pos++;
+                          } else {
+                            result0 = null;
+                            {
+                              matchFailed("\"+\"");
+                            }
+                          }
+                          if (result0 === null) {
+                            if (input.charCodeAt(pos) === 45) {
+                              result0 = "-";
+                              pos++;
+                            } else {
+                              result0 = null;
+                              {
+                                matchFailed("\"-\"");
+                              }
+                            }
+                            if (result0 === null) {
+                              if (input.charCodeAt(pos) === 46) {
+                                result0 = ".";
+                                pos++;
+                              } else {
+                                result0 = null;
+                                {
+                                  matchFailed("\".\"");
+                                }
+                              }
+                              if (result0 === null) {
+                                if (input.charCodeAt(pos) === 124) {
+                                  result0 = "|";
+                                  pos++;
+                                } else {
+                                  result0 = null;
+                                  {
+                                    matchFailed("\"|\"");
+                                  }
+                                }
+                                if (result0 === null) {
+                                  result0 = parse_Digit();
+                                  if (result0 === null) {
+                                    if (input.charCodeAt(pos) === 58) {
+                                      result0 = ":";
+                                      pos++;
+                                    } else {
+                                      result0 = null;
+                                      {
+                                        matchFailed("\":\"");
+                                      }
+                                    }
+                                    if (result0 === null) {
+                                      if (input.charCodeAt(pos) === 60) {
+                                        result0 = "<";
+                                        pos++;
+                                      } else {
+                                        result0 = null;
+                                        {
+                                          matchFailed("\"<\"");
+                                        }
+                                      }
+                                      if (result0 === null) {
+                                        if (input.charCodeAt(pos) === 61) {
+                                          result0 = "=";
+                                          pos++;
+                                        } else {
+                                          result0 = null;
+                                          {
+                                            matchFailed("\"=\"");
+                                          }
+                                        }
+                                        if (result0 === null) {
+                                          if (input.charCodeAt(pos) === 62) {
+                                            result0 = ">";
+                                            pos++;
+                                          } else {
+                                            result0 = null;
+                                            {
+                                              matchFailed("\">\"");
+                                            }
+                                          }
+                                          if (result0 === null) {
+                                            if (input.charCodeAt(pos) === 63) {
+                                              result0 = "?";
+                                              pos++;
+                                            } else {
+                                              result0 = null;
+                                              {
+                                                matchFailed("\"?\"");
+                                              }
+                                            }
+                                            if (result0 === null) {
+                                              if (input.charCodeAt(pos) === 64) {
+                                                result0 = "@";
+                                                pos++;
+                                              } else {
+                                                result0 = null;
+                                                {
+                                                  matchFailed("\"@\"");
+                                                }
+                                              }
+                                              if (result0 === null) {
+                                                result0 = parse_Alpha();
+                                                if (result0 === null) {
+                                                  if (input.charCodeAt(pos) === 91) {
+                                                    result0 = "[";
+                                                    pos++;
+                                                  } else {
+                                                    result0 = null;
+                                                    {
+                                                      matchFailed("\"[\"");
+                                                    }
+                                                  }
+                                                  if (result0 === null) {
+                                                    if (input.charCodeAt(pos) === 93) {
+                                                      result0 = "]";
+                                                      pos++;
+                                                    } else {
+                                                      result0 = null;
+                                                      {
+                                                        matchFailed("\"]\"");
+                                                      }
+                                                    }
+                                                    if (result0 === null) {
+                                                      if (input.charCodeAt(pos) === 94) {
+                                                        result0 = "^";
+                                                        pos++;
+                                                      } else {
+                                                        result0 = null;
+                                                        {
+                                                          matchFailed("\"^\"");
+                                                        }
+                                                      }
+                                                      if (result0 === null) {
+                                                        if (input.charCodeAt(pos) === 95) {
+                                                          result0 = "_";
+                                                          pos++;
+                                                        } else {
+                                                          result0 = null;
+                                                          {
+                                                            matchFailed("\"_\"");
+                                                          }
+                                                        }
+                                                        if (result0 === null) {
+                                                          if (input.charCodeAt(pos) === 96) {
+                                                            result0 = "`";
+                                                            pos++;
+                                                          } else {
+                                                            result0 = null;
+                                                            {
+                                                              matchFailed("\"`\"");
+                                                            }
+                                                          }
+                                                          if (result0 === null) {
+                                                            if (input.charCodeAt(pos) === 123) {
+                                                              result0 = "{";
+                                                              pos++;
+                                                            } else {
+                                                              result0 = null;
+                                                              {
+                                                                matchFailed("\"{\"");
+                                                              }
+                                                            }
+                                                            if (result0 === null) {
+                                                              if (/^[\/\/]/.test(input.charAt(pos))) {
+                                                                result0 = input.charAt(pos);
+                                                                pos++;
+                                                              } else {
+                                                                result0 = null;
+                                                                {
+                                                                  matchFailed("[\\/\\/]");
+                                                                }
+                                                              }
+                                                              if (result0 === null) {
+                                                                if (input.charCodeAt(pos) === 125) {
+                                                                  result0 = "}";
+                                                                  pos++;
+                                                                } else {
+                                                                  result0 = null;
+                                                                  {
+                                                                    matchFailed("\"}\"");
+                                                                  }
+                                                                }
+                                                                if (result0 === null) {
+                                                                  if (input.charCodeAt(pos) === 126) {
+                                                                    result0 = "~";
+                                                                    pos++;
+                                                                  } else {
+                                                                    result0 = null;
+                                                                    {
+                                                                      matchFailed("\"~\"");
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        return result0;
+      }
+
+      function parse_OptionalSP() {
+        var result0, result1;
+
+        result0 = [];
+        result1 = parse_SP();
+        while (result1 !== null) {
+          result0.push(result1);
+          result1 = parse_SP();
+        }
+        return result0;
+      }
+
+      function parse_QuotedString() {
+        var result0, result1, result2;
+        var pos0, pos1;
+
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_DQ();
+        if (result0 !== null) {
+          result1 = parse_QuotedStringInternal();
+          if (result1 !== null) {
+            result2 = parse_DQ();
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = function (offset, str) {
+            return str;
+          }(pos0, result0[1]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_QuotedStringInternal() {
+        var result0, result1;
+        var pos0;
+
+        pos0 = pos;
+        result0 = [];
+        result1 = parse_QDText();
+        if (result1 === null) {
+          result1 = parse_QuotedPair();
+        }
+        while (result1 !== null) {
+          result0.push(result1);
+          result1 = parse_QDText();
+          if (result1 === null) {
+            result1 = parse_QuotedPair();
+          }
+        }
+        if (result0 !== null) {
+          result0 = function (offset, str) {
+            return str.join('');
+          }(pos0, result0);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function parse_Char() {
+        var result0;
+
+        if (/^[\0-]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[\\0-]");
+          }
+        }
+        return result0;
+      }
+
+      function parse_UpAlpha() {
+        var result0;
+
+        if (/^[A-Z]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[A-Z]");
+          }
+        }
+        return result0;
+      }
+
+      function parse_LoAlpha() {
+        var result0;
+
+        if (/^[a-z]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[a-z]");
+          }
+        }
+        return result0;
+      }
+
+      function parse_Alpha() {
+        var result0;
+
+        result0 = parse_UpAlpha();
+        if (result0 === null) {
+          result0 = parse_LoAlpha();
+        }
+        return result0;
+      }
+
+      function parse_Digit() {
+        var result0;
+
+        if (/^[0-9]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[0-9]");
+          }
+        }
+        return result0;
+      }
+
+      function parse_SP() {
+        var result0;
+
+        if (/^[ ]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[ ]");
+          }
+        }
+        return result0;
+      }
+
+      function parse_DQ() {
+        var result0;
+
+        if (/^["]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[\"]");
+          }
+        }
+        return result0;
+      }
+
+      function parse_QDText() {
+        var result0;
+
+        if (/^[^"]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[^\"]");
+          }
+        }
+        return result0;
+      }
+
+      function parse_QuotedPair() {
+        var result0, result1;
+        var pos0;
+
+        pos0 = pos;
+        if (/^[\\]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          {
+            matchFailed("[\\\\]");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_Char();
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = pos0;
+          }
+        } else {
+          result0 = null;
+          pos = pos0;
+        }
+        return result0;
+      }
+
+      function cleanupExpected(expected) {
+        expected.sort();
+
+        var lastExpected = null;
+        var cleanExpected = [];
+        for (var i = 0; i < expected.length; i++) {
+          if (expected[i] !== lastExpected) {
+            cleanExpected.push(expected[i]);
+            lastExpected = expected[i];
+          }
+        }
+        return cleanExpected;
+      }
+
+      function computeErrorPosition() {
+        /*
+         * The first idea was to use |String.split| to break the input up to the
+         * error position along newlines and derive the line and column from
+         * there. However IE's |split| implementation is so broken that it was
+         * enough to prevent it.
+         */
+
+        var line = 1;
+        var column = 1;
+        var seenCR = false;
+
+        for (var i = 0; i < Math.max(pos, rightmostFailuresPos); i++) {
+          var ch = input.charAt(i);
+          if (ch === "\n") {
+            if (!seenCR) {
+              line++;
+            }
+            column = 1;
+            seenCR = false;
+          } else if (ch === "\r" || ch === '\u2028' || ch === '\u2029') {
+            line++;
+            column = 1;
+            seenCR = true;
+          } else {
+            column++;
+            seenCR = false;
+          }
+        }
+
+        return { line: line, column: column };
+      }
+
+      var result = parseFunctions[startRule]();
+
+      /*
+       * The parser is now in one of the following three states:
+       *
+       * 1. The parser successfully parsed the whole input.
+       *
+       *    - |result !== null|
+       *    - |pos === input.length|
+       *    - |rightmostFailuresExpected| may or may not contain something
+       *
+       * 2. The parser successfully parsed only a part of the input.
+       *
+       *    - |result !== null|
+       *    - |pos < input.length|
+       *    - |rightmostFailuresExpected| may or may not contain something
+       *
+       * 3. The parser did not successfully parse any part of the input.
+       *
+       *   - |result === null|
+       *   - |pos === 0|
+       *   - |rightmostFailuresExpected| contains at least one failure
+       *
+       * All code following this comment (including called functions) must
+       * handle these states.
+       */
+      if (result === null || pos !== input.length) {
+        var offset = Math.max(pos, rightmostFailuresPos);
+        var found = offset < input.length ? input.charAt(offset) : null;
+        var errorPosition = computeErrorPosition();
+
+        throw new this.SyntaxError(cleanupExpected(rightmostFailuresExpected), found, offset, errorPosition.line, errorPosition.column);
+      }
+
+      return result;
+    },
+
+    /* Returns the parser source code. */
+    toSource: function toSource() {
+      return this._source;
+    }
+  };
+
+  /* Thrown when a parser encounters a syntax error. */
+
+  result.SyntaxError = function (expected, found, offset, line, column) {
+    function buildMessage(expected, found) {
+      var expectedHumanized, foundHumanized;
+
+      switch (expected.length) {
+        case 0:
+          expectedHumanized = "end of input";
+          break;
+        case 1:
+          expectedHumanized = expected[0];
+          break;
+        default:
+          expectedHumanized = expected.slice(0, expected.length - 1).join(", ") + " or " + expected[expected.length - 1];
+      }
+
+      foundHumanized = found ? quote(found) : "end of input";
+
+      return "Expected " + expectedHumanized + " but " + foundHumanized + " found.";
+    }
+
+    this.name = "SyntaxError";
+    this.expected = expected;
+    this.found = found;
+    this.message = buildMessage(expected, found);
+    this.offset = offset;
+    this.line = line;
+    this.column = column;
+  };
+
+  result.SyntaxError.prototype = Error.prototype;
+
+  return result;
+}();
+
+// install ES6 Promise polyfill
+
+
+
+
+
+
+
+
+var paginator = interceptor_1({
+  success: function success(response, config) {
+    var link = response && response.headers && response.headers.Link;
+    var client = response && response.request && response.request.originator;
+
+    if (link) {
+      var nextLink = rfc5988.parse(link).filter(function (link) {
+        return link.rel === 'next';
+      })[0];
+
+      if (nextLink) {
+        response.nextPage = function (callback) {
+          var linkParts = url.parse(nextLink.href);
+          var linkQuery = querystring.parse(linkParts.query);
+          linkQuery.access_token = linkQuery.access_token || config.access_token;
+          linkParts.search = querystring.stringify(linkQuery);
+          return client({
+            path: url.format(linkParts),
+            callback: callback
+          });
+        };
+      }
+    }
+
+    return response;
+  }
+});
+
+var paginator_1 = paginator;
+
+var standardResponse = interceptor_1({
+  response: transform
+});
+
+function transform(response) {
+  return {
+    url: response.url,
+    status: response.status && response.status.code,
+    headers: response.headers,
+    entity: response.entity,
+    error: response.error,
+    callback: response.request && response.request.callback,
+    nextPage: response.nextPage
+  };
+}
+
+var standard_response = standardResponse;
+
+// install ES6 Promise polyfill
+
+var _typeof$4 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+
+
+
+
+var callbackify = interceptor_1({
+  success: function success(response) {
+    var callback = response && response.callback;
+
+    if (typeof callback === 'function') {
+      callback(null, response.entity, response);
+    }
+
+    return response;
+  },
+  error: function error(response) {
+    var callback = response && response.callback;
+
+    if (typeof callback === 'function') {
+      var err = response.error || response.entity;
+      if ((typeof err === 'undefined' ? 'undefined' : _typeof$4(err)) !== 'object') err = new Error(err);
+      callback(err);
+    }
+
+    return response;
+  }
+});
+
+var callbackify_1 = callbackify;
+
+// install ES6 Promise polyfill
+
+
+
+
+
+// rest.js client with MIME support
+var client$4 = function (config) {
+  return node_1.wrap(errorCode).wrap(pathPrefix, { prefix: config.endpoint }).wrap(mime_1$1, { mime: 'application/json' }).wrap(template).wrap(defaultRequest, {
+    params: { access_token: config.accessToken }
+  }).wrap(paginator_1, { access_token: config.accessToken }).wrap(standard_response).wrap(callbackify_1);
 };
 
 /*
@@ -339,7 +4640,7 @@ var base64 = {
  * @param {string} token an access token
  * @return {string} username
  */
-function getUser$1(token) {
+function getUser(token) {
   var data = token.split('.')[1];
   if (!data) return null;
   data = data.replace(/-/g, '+').replace(/_/g, '/');
@@ -356,15 +4657,118 @@ function getUser$1(token) {
   }
 }
 
-var get_user = getUser$1;
+var get_user = getUser;
 
-var invariant$1 = require('../../vendor/invariant');
-var makeService$2 = require('../make_service');
+var _typeof$5 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+
+
+
+
+
+/**
+ * Services all have the same constructor pattern: you initialize them
+ * with an access token and options, and they validate those arguments
+ * in a predictable way. This is a constructor-generator that makes
+ * it possible to require each service's API individually.
+ *
+ * @private
+ * @param {string} name the name of the Mapbox API this class will access:
+ * this is set to the name of the function so it will show up in tracebacks
+ * @returns {Function} constructor function
+ */
+function makeService(name) {
+
+  function service(accessToken, options) {
+    this.name = name;
+
+    invariant_1(typeof accessToken === 'string', 'accessToken required to instantiate Mapbox client');
+
+    var endpoint = constants.DEFAULT_ENDPOINT;
+
+    if (options !== undefined) {
+      invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$5(options)) === 'object', 'options must be an object');
+      if (options.endpoint) {
+        invariant_1(typeof options.endpoint === 'string', 'endpoint must be a string');
+        endpoint = options.endpoint;
+      }
+      if (options.account) {
+        invariant_1(typeof options.account === 'string', 'account must be a string');
+        this.owner = options.account;
+      }
+    }
+
+    this.client = client$4({
+      endpoint: endpoint,
+      accessToken: accessToken
+    });
+
+    this.accessToken = accessToken;
+    this.endpoint = endpoint;
+    this.owner = this.owner || get_user(accessToken);
+    invariant_1(!!this.owner, 'could not determine account from provided accessToken');
+  }
+
+  return service;
+}
+
+var make_service = makeService;
+
+/*
+ * xtend by Jake Verbaten
+ *
+ * Licensed under MIT
+ * https://github.com/Raynos/xtend
+ */
+var extendMutable_1 = extendMutable;
+var extend_1 = extend;
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function extendMutable(target) {
+    for (var i = 1; i < arguments.length; i++) {
+        var source = arguments[i];
+
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key];
+            }
+        }
+    }
+
+    return target;
+}
+
+function extend() {
+    var target = {};
+
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i];
+
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key];
+            }
+        }
+    }
+
+    return target;
+}
+
+var xtend = {
+	extendMutable: extendMutable_1,
+	extend: extend_1
+};
+
+var _typeof$6 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+
+
 
 /**
  * @class MapboxGeocoding
  */
-var MapboxGeocoding = makeService$2('MapboxGeocoding');
+var MapboxGeocoding = make_service('MapboxGeocoding');
 
 var API_GEOCODING_FORWARD = '/geocoding/v5/{dataset}/{query}.json{?access_token,proximity,country,types,bbox,limit,autocomplete,language}';
 var API_GEOCODING_REVERSE = '/geocoding/v5/{dataset}/{longitude},{latitude}.json{?access_token,types,limit,language}';
@@ -444,8 +4848,8 @@ MapboxGeocoding.prototype.geocodeForward = function (query, options, callback) {
       query = query.join(';');
     }
   }
-  invariant$1(typeof query === 'string', 'query must be a string');
-  invariant$1((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1(typeof query === 'string', 'query must be a string');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$6(options)) === 'object', 'options must be an object');
 
   var queryOptions = {
     query: query,
@@ -454,27 +4858,27 @@ MapboxGeocoding.prototype.geocodeForward = function (query, options, callback) {
 
   var precision = FORWARD_GEOCODING_PROXIMITY_PRECISION;
   if (options.precision) {
-    invariant$1(typeof options.precision === 'number', 'precision option must be number');
+    invariant_1(typeof options.precision === 'number', 'precision option must be number');
     precision = options.precision;
   }
 
   if (options.proximity) {
-    invariant$1(typeof options.proximity.latitude === 'number' && typeof options.proximity.longitude === 'number', 'proximity must be an object with numeric latitude & longitude properties');
+    invariant_1(typeof options.proximity.latitude === 'number' && typeof options.proximity.longitude === 'number', 'proximity must be an object with numeric latitude & longitude properties');
     queryOptions.proximity = roundTo(options.proximity.longitude, precision) + ',' + roundTo(options.proximity.latitude, precision);
   }
 
   if (options.bbox) {
-    invariant$1(typeof options.bbox[0] === 'number' && typeof options.bbox[1] === 'number' && typeof options.bbox[2] === 'number' && typeof options.bbox[3] === 'number' && options.bbox.length === 4, 'bbox must be an array with numeric values in the form [minX, minY, maxX, maxY]');
+    invariant_1(typeof options.bbox[0] === 'number' && typeof options.bbox[1] === 'number' && typeof options.bbox[2] === 'number' && typeof options.bbox[3] === 'number' && options.bbox.length === 4, 'bbox must be an array with numeric values in the form [minX, minY, maxX, maxY]');
     queryOptions.bbox = options.bbox[0] + ',' + options.bbox[1] + ',' + options.bbox[2] + ',' + options.bbox[3];
   }
 
   if (options.limit) {
-    invariant$1(typeof options.limit === 'number', 'limit must be a number');
+    invariant_1(typeof options.limit === 'number', 'limit must be a number');
     queryOptions.limit = options.limit;
   }
 
   if (options.dataset) {
-    invariant$1(typeof options.dataset === 'string', 'dataset option must be string');
+    invariant_1(typeof options.dataset === 'string', 'dataset option must be string');
     queryOptions.dataset = options.dataset;
   }
 
@@ -482,7 +4886,7 @@ MapboxGeocoding.prototype.geocodeForward = function (query, options, callback) {
     if (Array.isArray(options.country)) {
       queryOptions.country = options.country.join(',');
     } else {
-      invariant$1(typeof options.country === 'string', 'country option must be an array or string');
+      invariant_1(typeof options.country === 'string', 'country option must be an array or string');
       queryOptions.country = options.country;
     }
   }
@@ -491,7 +4895,7 @@ MapboxGeocoding.prototype.geocodeForward = function (query, options, callback) {
     if (Array.isArray(options.language)) {
       queryOptions.language = options.language.join(',');
     } else {
-      invariant$1(typeof options.language === 'string', 'language option must be an array or string');
+      invariant_1(typeof options.language === 'string', 'language option must be an array or string');
       queryOptions.language = options.language;
     }
   }
@@ -500,13 +4904,13 @@ MapboxGeocoding.prototype.geocodeForward = function (query, options, callback) {
     if (Array.isArray(options.types)) {
       queryOptions.types = options.types.join(',');
     } else {
-      invariant$1(typeof options.types === 'string', 'types option must be an array or string');
+      invariant_1(typeof options.types === 'string', 'types option must be an array or string');
       queryOptions.types = options.types;
     }
   }
 
   if (typeof options.autocomplete === 'boolean') {
-    invariant$1(typeof options.autocomplete === 'boolean', 'autocomplete must be a boolean');
+    invariant_1(typeof options.autocomplete === 'boolean', 'autocomplete must be a boolean');
     queryOptions.autocomplete = options.autocomplete;
   }
 
@@ -562,23 +4966,23 @@ MapboxGeocoding.prototype.geocodeReverse = function (location, options, callback
   }
 
   // typecheck arguments
-  invariant$1((typeof location === 'undefined' ? 'undefined' : _typeof(location)) === 'object' && location !== null, 'location must be an object');
-  invariant$1((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1((typeof location === 'undefined' ? 'undefined' : _typeof$6(location)) === 'object' && location !== null, 'location must be an object');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$6(options)) === 'object', 'options must be an object');
 
-  invariant$1(typeof location.latitude === 'number' && typeof location.longitude === 'number', 'location must be an object with numeric latitude & longitude properties');
+  invariant_1(typeof location.latitude === 'number' && typeof location.longitude === 'number', 'location must be an object with numeric latitude & longitude properties');
 
   var queryOptions = {
     dataset: 'mapbox.places'
   };
 
   if (options.dataset) {
-    invariant$1(typeof options.dataset === 'string', 'dataset option must be string');
+    invariant_1(typeof options.dataset === 'string', 'dataset option must be string');
     queryOptions.dataset = options.dataset;
   }
 
   var precision = REVERSE_GEOCODING_PRECISION;
   if (options.precision) {
-    invariant$1(typeof options.precision === 'number', 'precision option must be number');
+    invariant_1(typeof options.precision === 'number', 'precision option must be number');
     precision = options.precision;
   }
 
@@ -586,7 +4990,7 @@ MapboxGeocoding.prototype.geocodeReverse = function (location, options, callback
     if (Array.isArray(options.language)) {
       queryOptions.language = options.language.join(',');
     } else {
-      invariant$1(typeof options.language === 'string', 'language option must be an array or string');
+      invariant_1(typeof options.language === 'string', 'language option must be an array or string');
       queryOptions.language = options.language;
     }
   }
@@ -595,14 +4999,14 @@ MapboxGeocoding.prototype.geocodeReverse = function (location, options, callback
     if (Array.isArray(options.types)) {
       queryOptions.types = options.types.join(',');
     } else {
-      invariant$1(typeof options.types === 'string', 'types option must be an array or string');
+      invariant_1(typeof options.types === 'string', 'types option must be an array or string');
       queryOptions.types = options.types;
     }
   }
 
   if (options.limit) {
-    invariant$1(typeof options.limit === 'number', 'limit option must be a number');
-    invariant$1(options.types.split(',').length === 1, 'a single type must be specified to use the limit option');
+    invariant_1(typeof options.limit === 'number', 'limit option must be a number');
+    invariant_1(options.types.split(',').length === 1, 'a single type must be specified to use the limit option');
     queryOptions.limit = options.limit;
   }
 
@@ -616,20 +5020,55 @@ MapboxGeocoding.prototype.geocodeReverse = function (location, options, callback
   });
 };
 
-module.exports = MapboxGeocoding;
+var geocoding = MapboxGeocoding;
 
-var geocoding = /*#__PURE__*/Object.freeze({
+/**
+ * Given an object that should be a location, ensure that it has
+ * valid numeric longitude & latitude properties
+ *
+ * @param {Object} location object with longitude and latitude values
+ * @throws {AssertError} if the object is not a valid location
+ * @returns {undefined} nothing
+ * @private
+ */
+function invariantLocation(location) {
+  invariant_1(typeof location.latitude === 'number' && typeof location.longitude === 'number', 'location must be an object with numeric latitude & longitude properties');
+  if (location.zoom !== undefined) {
+    invariant_1(typeof location.zoom === 'number', 'zoom must be numeric');
+  }
+}
 
-});
+var invariant_location = invariantLocation;
 
-var invariant$2 = require('../../vendor/invariant');
-var formatPoints = require('../format_points');
-var makeService$3 = require('../make_service');
+/**
+ * Format waypionts in a way that's friendly to the directions and surface
+ * API: comma-separated latitude, longitude pairs with semicolons between
+ * them.
+ * @private
+ * @param {Array<Object>} waypoints array of objects with latitude and longitude
+ * properties
+ * @returns {string} formatted points
+ * @throws {Error} if the input is invalid
+ */
+function formatPoints(waypoints) {
+  return waypoints.map(function (location) {
+    invariant_location(location);
+    return location.longitude + ',' + location.latitude;
+  }).join(';');
+}
+
+var format_points = formatPoints;
+
+var _typeof$7 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+
+
+
 
 /**
  * @class MapboxSurface
  */
-var MapboxSurface = makeService$3('MapboxSurface');
+var MapboxSurface = make_service('MapboxSurface');
 
 var API_SURFACE = '/v4/surface/{mapid}.json{?access_token,layer,fields,points,geojson,interpolate,encoded_polyline}';
 
@@ -672,22 +5111,22 @@ MapboxSurface.prototype.surface = function (mapid, layer, fields, path, options,
   }
 
   // typecheck arguments
-  invariant$2(typeof mapid === 'string', 'mapid must be a string');
-  invariant$2(typeof layer === 'string', 'layer must be a string');
-  invariant$2(Array.isArray(fields), 'fields must be an array of strings');
-  invariant$2(Array.isArray(path) || typeof path === 'string', 'path must be an array of objects or a string');
-  invariant$2((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1(typeof mapid === 'string', 'mapid must be a string');
+  invariant_1(typeof layer === 'string', 'layer must be a string');
+  invariant_1(Array.isArray(fields), 'fields must be an array of strings');
+  invariant_1(Array.isArray(path) || typeof path === 'string', 'path must be an array of objects or a string');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$7(options)) === 'object', 'options must be an object');
 
   var interpolate = true,
       geojson = false;
 
   if (options.interpolate !== undefined) {
-    invariant$2(typeof options.interpolate === 'boolean', 'interpolate must be a boolean');
+    invariant_1(typeof options.interpolate === 'boolean', 'interpolate must be a boolean');
     interpolate = options.interpolate;
   }
 
   if (options.geojson !== undefined) {
-    invariant$2(typeof options.geojson === 'boolean', 'geojson option must be boolean');
+    invariant_1(typeof options.geojson === 'boolean', 'geojson option must be boolean');
     geojson = options.geojson;
   }
 
@@ -700,13 +5139,13 @@ MapboxSurface.prototype.surface = function (mapid, layer, fields, path, options,
   };
 
   if (Array.isArray(path)) {
-    surfaceOptions.points = formatPoints(path);
+    surfaceOptions.points = format_points(path);
   } else {
     surfaceOptions.encoded_polyline = path;
   }
 
   if (options.zoom !== undefined) {
-    invariant$2(typeof options.zoom === 'number', 'zoom must be a number');
+    invariant_1(typeof options.zoom === 'number', 'zoom must be a number');
     surfaceOptions.z = options.zoom;
   }
 
@@ -717,20 +5156,18 @@ MapboxSurface.prototype.surface = function (mapid, layer, fields, path, options,
   });
 };
 
-module.exports = MapboxSurface;
+var surface = MapboxSurface;
 
-var surface = /*#__PURE__*/Object.freeze({
+var _typeof$8 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-});
 
-var invariant$3 = require('../../vendor/invariant');
-var formatPoints$1 = require('../format_points');
-var makeService$4 = require('../make_service');
+
+
 
 /**
  * @class MapboxDirections
  */
-var MapboxDirections = makeService$4('MapboxDirections');
+var MapboxDirections = make_service('MapboxDirections');
 
 var API_DIRECTIONS = '/directions/v5/{account}/{profile}/{encodedWaypoints}.json{?access_token,alternatives,geometries,overview,radiuses,steps,continue_straight,bearings}';
 
@@ -827,10 +5264,10 @@ MapboxDirections.prototype.getDirections = function (waypoints, options, callbac
   }
 
   // typecheck arguments
-  invariant$3(Array.isArray(waypoints), 'waypoints must be an array');
-  invariant$3((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1(Array.isArray(waypoints), 'waypoints must be an array');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$8(options)) === 'object', 'options must be an object');
 
-  var encodedWaypoints = formatPoints$1(waypoints);
+  var encodedWaypoints = format_points(waypoints);
 
   var params = {
     encodedWaypoints: encodedWaypoints,
@@ -842,51 +5279,51 @@ MapboxDirections.prototype.getDirections = function (waypoints, options, callbac
   };
 
   if (options.profile) {
-    invariant$3(typeof options.profile === 'string', 'profile option must be string');
+    invariant_1(typeof options.profile === 'string', 'profile option must be string');
     params.profile = options.profile;
   }
 
   if (options.account) {
-    invariant$3(typeof options.account === 'string', 'account option must be string');
+    invariant_1(typeof options.account === 'string', 'account option must be string');
     params.account = options.account;
   }
 
   if (typeof options.alternatives !== 'undefined') {
-    invariant$3(typeof options.alternatives === 'boolean', 'alternatives option must be boolean');
+    invariant_1(typeof options.alternatives === 'boolean', 'alternatives option must be boolean');
     params.alternatives = options.alternatives;
   }
 
   if (options.radiuses) {
-    invariant$3(Array.isArray(options.radiuses), 'radiuses must be an array');
-    invariant$3(options.radiuses.length === waypoints.length, 'There must be as many radiuses as there are waypoints in the request');
+    invariant_1(Array.isArray(options.radiuses), 'radiuses must be an array');
+    invariant_1(options.radiuses.length === waypoints.length, 'There must be as many radiuses as there are waypoints in the request');
     params.radiuses = options.radiuses.join(';');
   }
 
   if (typeof options.steps !== 'undefined') {
-    invariant$3(typeof options.steps === 'boolean', 'steps option must be boolean');
+    invariant_1(typeof options.steps === 'boolean', 'steps option must be boolean');
     params.steps = options.steps;
   }
 
   var allowedGeometries = ['polyline', 'geojson'];
   if (options.geometries) {
-    invariant$3(allowedGeometries.indexOf(options.geometries) !== -1, 'geometries option must be ' + allowedGeometries);
+    invariant_1(allowedGeometries.indexOf(options.geometries) !== -1, 'geometries option must be ' + allowedGeometries);
     params.geometries = options.geometries;
   }
 
   var allowedOverviews = ['simplified', 'full'];
   if (options.overview) {
-    invariant$3(allowedOverviews.indexOf(options.overview) !== -1, 'overview option must be ' + allowedOverviews);
+    invariant_1(allowedOverviews.indexOf(options.overview) !== -1, 'overview option must be ' + allowedOverviews);
     params.overview = options.overview;
   }
 
   if (typeof options.continue_straight !== 'undefined') {
-    invariant$3(typeof options.continue_straight === 'boolean', 'continue_straight option must be boolean');
+    invariant_1(typeof options.continue_straight === 'boolean', 'continue_straight option must be boolean');
     params.continue_straight = options.continue_straight;
   }
 
   if (options.bearings) {
-    invariant$3(Array.isArray(options.radiuses), 'bearings must be an array');
-    invariant$3(options.bearings.length === waypoints.length, 'There must be as many bearings as there are waypoints in the request');
+    invariant_1(Array.isArray(options.radiuses), 'bearings must be an array');
+    invariant_1(options.bearings.length === waypoints.length, 'There must be as many bearings as there are waypoints in the request');
     params.bearings = options.bearings.join(';');
   }
 
@@ -897,19 +5334,19 @@ MapboxDirections.prototype.getDirections = function (waypoints, options, callbac
   });
 };
 
-module.exports = MapboxDirections;
+var directions = MapboxDirections;
 
-var directions = /*#__PURE__*/Object.freeze({
+var uploads = createCommonjsModule(function (module) {
 
-});
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var invariant$4 = require('../../vendor/invariant');
-var makeService$5 = require('../make_service');
+
+
 
 /**
  * @class MapboxUploads
  */
-var MapboxUploads = module.exports = makeService$5('MapboxUploads');
+var MapboxUploads = module.exports = make_service('MapboxUploads');
 
 var API_UPLOADS = '/uploads/v1/{owner}{?access_token}';
 var API_UPLOAD = '/uploads/v1/{owner}/{upload}{?access_token}';
@@ -1048,7 +5485,7 @@ MapboxUploads.prototype.createUploadCredentials = function (callback) {
  * });
  */
 MapboxUploads.prototype.createUpload = function (options, callback) {
-  invariant$4((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
 
   return this.client({
     path: API_UPLOADS,
@@ -1083,7 +5520,7 @@ MapboxUploads.prototype.createUpload = function (options, callback) {
  * });
  */
 MapboxUploads.prototype.readUpload = function (upload, callback) {
-  invariant$4(typeof upload === 'string', 'upload must be a string');
+  invariant_1(typeof upload === 'string', 'upload must be a string');
 
   return this.client({
     path: API_UPLOAD,
@@ -1109,7 +5546,7 @@ MapboxUploads.prototype.readUpload = function (upload, callback) {
  * });
  */
 MapboxUploads.prototype.deleteUpload = function (upload, callback) {
-  invariant$4(typeof upload === 'string', 'upload must be a string');
+  invariant_1(typeof upload === 'string', 'upload must be a string');
 
   return this.client({
     method: 'delete',
@@ -1121,64 +5558,12 @@ MapboxUploads.prototype.deleteUpload = function (upload, callback) {
     callback: callback
   });
 };
-
-var uploads = /*#__PURE__*/Object.freeze({
-
 });
-
-/*
- * Copyright 2013-2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
-/*
- * Use invariant() to assert state which your program assumes to be true.
- *
- * Provide sprintf-style format (only %s is supported) and arguments
- * to provide information about what broke and what you were
- * expecting.
- *
- * The invariant message will be stripped in production, but the invariant
- * will remain to ensure logic does not differ in production.
- */
-
-var NODE_ENV = process.env.NODE_ENV;
-
-var invariant$5 = function invariant(condition, format, a, b, c, d, e, f) {
-  if (NODE_ENV !== 'production') {
-    if (format === undefined) {
-      throw new Error('invariant requires an error message argument');
-    }
-  }
-
-  if (!condition) {
-    var error;
-    if (format === undefined) {
-      error = new Error('Minified exception occurred; use the non-minified dev environment ' + 'for the full error message and additional helpful warnings.');
-    } else {
-      var args = [a, b, c, d, e, f];
-      var argIndex = 0;
-      error = new Error(format.replace(/%s/g, function () {
-        return args[argIndex++];
-      }));
-      error.name = 'Invariant Violation';
-    }
-
-    error.framesToPop = 1; // we don't care about invariant's own frame
-    throw error;
-  }
-};
-
-var invariant_1 = invariant$5;
 
 /**
  * @class MapboxMatching
  */
-var MapboxMatching = makeService$1('MapboxMatching');
+var MapboxMatching = make_service('MapboxMatching');
 
 var API_MATCHING = '/matching/v5/{account}/{profile}/{coordinates}.json{?access_token,geometries,radiuses,steps,overview,timestamps,annotations}';
 
@@ -1306,14 +5691,57 @@ MapboxMatching.prototype.matching = function (coordinates, options, callback) {
 
 var matching = MapboxMatching;
 
-var invariant$6 = require('../../vendor/invariant');
-var hat = require('../../vendor/hat');
-var makeService$6 = require('../make_service');
+var hat_1 = createCommonjsModule(function (module) {
+/* eslint-disable */
+/*
+ * hat
+ * written by James Halliday, licensed under MIT/X11
+ * https://github.com/substack/node-hat
+ */
+var hat = module.exports = function (bits, base) {
+    if (!base) base = 16;
+    if (bits === undefined) bits = 128;
+    if (bits <= 0) return '0';
+
+    var digits = Math.log(Math.pow(2, bits)) / Math.log(base);
+    for (var i = 2; digits === Infinity; i *= 2) {
+        digits = Math.log(Math.pow(2, bits / i)) / Math.log(base) * i;
+    }
+
+    var rem = digits - Math.floor(digits);
+
+    var res = '';
+
+    for (var i = 0; i < Math.floor(digits); i++) {
+        var x = Math.floor(Math.random() * base).toString(base);
+        res = x + res;
+    }
+
+    if (rem) {
+        var b = Math.pow(base, rem);
+        var x = Math.floor(Math.random() * b).toString(base);
+        res = x + res;
+    }
+
+    var parsed = parseInt(res, base);
+    if (parsed !== Infinity && parsed >= Math.pow(2, bits)) {
+        return hat(bits, base);
+    } else return res;
+};
+});
+
+var datasets = createCommonjsModule(function (module) {
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+
+
+
 
 /**
  * @class MapboxDatasets
  */
-var MapboxDatasets = module.exports = makeService$6('MapboxDatasets');
+var MapboxDatasets = module.exports = make_service('MapboxDatasets');
 
 var API_DATASET_DATASETS = '/datasets/v1/{owner}{?access_token,limit,fresh}';
 var API_DATASET_DATASET = '/datasets/v1/{owner}/{dataset}{?access_token}';
@@ -1401,7 +5829,7 @@ MapboxDatasets.prototype.createDataset = function (options, callback) {
     options = {};
   }
 
-  invariant$6((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
 
   return this.client({
     path: API_DATASET_DATASETS,
@@ -1436,7 +5864,7 @@ MapboxDatasets.prototype.createDataset = function (options, callback) {
  * });
  */
 MapboxDatasets.prototype.readDataset = function (dataset, callback) {
-  invariant$6(typeof dataset === 'string', 'dataset must be a string');
+  invariant_1(typeof dataset === 'string', 'dataset must be a string');
 
   return this.client({
     path: API_DATASET_DATASET,
@@ -1475,9 +5903,9 @@ MapboxDatasets.prototype.readDataset = function (dataset, callback) {
  * });
  */
 MapboxDatasets.prototype.updateDataset = function (dataset, options, callback) {
-  invariant$6(typeof dataset === 'string', 'dataset must be a string');
-  invariant$6((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
-  invariant$6(!!options.name || !!options.description, 'options must include a name or a description');
+  invariant_1(typeof dataset === 'string', 'dataset must be a string');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1(!!options.name || !!options.description, 'options must include a name or a description');
 
   return this.client({
     path: API_DATASET_DATASET,
@@ -1506,7 +5934,7 @@ MapboxDatasets.prototype.updateDataset = function (dataset, options, callback) {
  * });
  */
 MapboxDatasets.prototype.deleteDataset = function (dataset, callback) {
-  invariant$6(typeof dataset === 'string', 'dataset must be a string');
+  invariant_1(typeof dataset === 'string', 'dataset must be a string');
 
   return this.client({
     path: API_DATASET_DATASET,
@@ -1559,8 +5987,8 @@ MapboxDatasets.prototype.listFeatures = function (dataset, options, callback) {
     options = {};
   }
 
-  invariant$6(typeof dataset === 'string', 'dataset must be a string');
-  invariant$6((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be a object');
+  invariant_1(typeof dataset === 'string', 'dataset must be a string');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be a object');
 
   var params = {
     owner: this.owner,
@@ -1568,7 +5996,7 @@ MapboxDatasets.prototype.listFeatures = function (dataset, options, callback) {
   };
 
   if (options.limit) {
-    invariant$6(typeof options.limit === 'number', 'limit option must be a number');
+    invariant_1(typeof options.limit === 'number', 'limit option must be a number');
     params.limit = options.limit;
   }
 
@@ -1654,10 +6082,10 @@ MapboxDatasets.prototype.listFeatures = function (dataset, options, callback) {
  * });
  */
 MapboxDatasets.prototype.insertFeature = function (feature, dataset, callback) {
-  invariant$6(typeof dataset === 'string', 'dataset must be a string');
+  invariant_1(typeof dataset === 'string', 'dataset must be a string');
 
-  var id = feature.id || hat();
-  invariant$6(typeof id === 'string', 'The GeoJSON feature\'s id must be a string');
+  var id = feature.id || hat_1();
+  invariant_1(typeof id === 'string', 'The GeoJSON feature\'s id must be a string');
 
   return this.client({
     path: API_DATASET_FEATURE,
@@ -1699,8 +6127,8 @@ MapboxDatasets.prototype.insertFeature = function (feature, dataset, callback) {
  * });
  */
 MapboxDatasets.prototype.readFeature = function (id, dataset, callback) {
-  invariant$6(typeof id === 'string', 'id must be a string');
-  invariant$6(typeof dataset === 'string', 'dataset must be a string');
+  invariant_1(typeof id === 'string', 'id must be a string');
+  invariant_1(typeof dataset === 'string', 'dataset must be a string');
 
   return this.client({
     path: API_DATASET_FEATURE,
@@ -1729,8 +6157,8 @@ MapboxDatasets.prototype.readFeature = function (id, dataset, callback) {
  * });
  */
 MapboxDatasets.prototype.deleteFeature = function (id, dataset, callback) {
-  invariant$6(typeof id === 'string', 'id must be a string');
-  invariant$6(typeof dataset === 'string', 'dataset must be a string');
+  invariant_1(typeof id === 'string', 'id must be a string');
+  invariant_1(typeof dataset === 'string', 'dataset must be a string');
 
   return this.client({
     path: API_DATASET_FEATURE,
@@ -1743,19 +6171,18 @@ MapboxDatasets.prototype.deleteFeature = function (id, dataset, callback) {
     callback: callback
   });
 };
-
-var datasets = /*#__PURE__*/Object.freeze({
-
 });
 
-var invariant$7 = require('../../vendor/invariant');
-var formatPoints$2 = require('../format_points');
-var makeService$7 = require('../make_service');
+var _typeof$9 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+
+
+
 
 /**
  * @class MapboxMatrix
  */
-var MapboxMatrix = makeService$7('MapboxMatrix');
+var MapboxMatrix = make_service('MapboxMatrix');
 
 var API_MATRIX = '/directions-matrix/v1/mapbox/{profile}/{encodedWaypoints}.json{?access_token}';
 
@@ -1842,10 +6269,10 @@ MapboxMatrix.prototype.getMatrix = function (waypoints, options, callback) {
   }
 
   // typecheck arguments
-  invariant$7(Array.isArray(waypoints), 'waypoints must be an array');
-  invariant$7((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+  invariant_1(Array.isArray(waypoints), 'waypoints must be an array');
+  invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$9(options)) === 'object', 'options must be an object');
 
-  var encodedWaypoints = formatPoints$2(waypoints);
+  var encodedWaypoints = format_points(waypoints);
 
   var params = {
     encodedWaypoints: encodedWaypoints,
@@ -1853,7 +6280,7 @@ MapboxMatrix.prototype.getMatrix = function (waypoints, options, callback) {
   };
 
   if (options.profile) {
-    invariant$7(typeof options.profile === 'string', 'profile option must be string');
+    invariant_1(typeof options.profile === 'string', 'profile option must be string');
     params.profile = options.profile;
   }
 
@@ -1864,15 +6291,7 @@ MapboxMatrix.prototype.getMatrix = function (waypoints, options, callback) {
   });
 };
 
-module.exports = MapboxMatrix;
-
-var matrix = /*#__PURE__*/Object.freeze({
-
-});
-
-function createCommonjsModule(fn, module) {
-	return module = { exports: {} }, fn(module, module.exports), module.exports;
-}
+var matrix = MapboxMatrix;
 
 var tilestats = createCommonjsModule(function (module) {
 
@@ -1882,7 +6301,7 @@ var tilestats = createCommonjsModule(function (module) {
 /**
  * @class MapboxTilestats
  */
-var MapboxTilestats = module.exports = makeService$1('MapboxTilestats');
+var MapboxTilestats = module.exports = make_service('MapboxTilestats');
 
 var API_TILESTATS_STATISTICS = '/tilestats/v1/{owner}/{tileset}{?access_token}';
 
@@ -1971,164 +6390,6 @@ MapboxTilestats.prototype.putTilestats = function (tileset, statistics, callback
 };
 });
 
-/*
- * Copyright 2015-2016 the original author or authors
- * @license MIT, see LICENSE.txt for details
- *
- * @author Scott Andrews
- */
-
-var uriEncoder, operations, prefixRE;
-
-uriEncoder = require('./uriEncoder');
-
-prefixRE = /^([^:]*):([0-9]+)$/;
-operations = {
-	'': { first: '', separator: ',', named: false, empty: '', encoder: uriEncoder.encode },
-	'+': { first: '', separator: ',', named: false, empty: '', encoder: uriEncoder.encodeURL },
-	'#': { first: '#', separator: ',', named: false, empty: '', encoder: uriEncoder.encodeURL },
-	'.': { first: '.', separator: '.', named: false, empty: '', encoder: uriEncoder.encode },
-	'/': { first: '/', separator: '/', named: false, empty: '', encoder: uriEncoder.encode },
-	';': { first: ';', separator: ';', named: true, empty: '', encoder: uriEncoder.encode },
-	'?': { first: '?', separator: '&', named: true, empty: '=', encoder: uriEncoder.encode },
-	'&': { first: '&', separator: '&', named: true, empty: '=', encoder: uriEncoder.encode },
-	'=': { reserved: true },
-	',': { reserved: true },
-	'!': { reserved: true },
-	'@': { reserved: true },
-	'|': { reserved: true }
-};
-
-function apply(operation, expression, params) {
-	/*jshint maxcomplexity:11 */
-	return expression.split(',').reduce(function (result, variable) {
-		var opts, value;
-
-		opts = {};
-		if (variable.slice(-1) === '*') {
-			variable = variable.slice(0, -1);
-			opts.explode = true;
-		}
-		if (prefixRE.test(variable)) {
-			var prefix = prefixRE.exec(variable);
-			variable = prefix[1];
-			opts.maxLength = parseInt(prefix[2]);
-		}
-
-		variable = uriEncoder.decode(variable);
-		value = params[variable];
-
-		if (value === void 0 || value === null) {
-			return result;
-		}
-		if (Array.isArray(value)) {
-			result = value.reduce(function (result, value) {
-				if (result.length) {
-					result += opts.explode ? operation.separator : ',';
-					if (operation.named && opts.explode) {
-						result += operation.encoder(variable);
-						result += value.length ? '=' : operation.empty;
-					}
-				} else {
-					result += operation.first;
-					if (operation.named) {
-						result += operation.encoder(variable);
-						result += value.length ? '=' : operation.empty;
-					}
-				}
-				result += operation.encoder(value);
-				return result;
-			}, result);
-		} else if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
-			result = Object.keys(value).reduce(function (result, name) {
-				if (result.length) {
-					result += opts.explode ? operation.separator : ',';
-				} else {
-					result += operation.first;
-					if (operation.named && !opts.explode) {
-						result += operation.encoder(variable);
-						result += value[name].length ? '=' : operation.empty;
-					}
-				}
-				result += operation.encoder(name);
-				result += opts.explode ? '=' : ',';
-				result += operation.encoder(value[name]);
-				return result;
-			}, result);
-		} else {
-			value = String(value);
-			if (opts.maxLength) {
-				value = value.slice(0, opts.maxLength);
-			}
-			result += result.length ? operation.separator : operation.first;
-			if (operation.named) {
-				result += operation.encoder(variable);
-				result += value.length ? '=' : operation.empty;
-			}
-			result += operation.encoder(value);
-		}
-
-		return result;
-	}, '');
-}
-
-function expandExpression(expression, params) {
-	var operation;
-
-	operation = operations[expression.slice(0, 1)];
-	if (operation) {
-		expression = expression.slice(1);
-	} else {
-		operation = operations[''];
-	}
-
-	if (operation.reserved) {
-		throw new Error('Reserved expression operations are not supported');
-	}
-
-	return apply(operation, expression, params);
-}
-
-function expandTemplate(template, params) {
-	var start, end, uri;
-
-	uri = '';
-	end = 0;
-	while (true) {
-		start = template.indexOf('{', end);
-		if (start === -1) {
-			// no more expressions
-			uri += template.slice(end);
-			break;
-		}
-		uri += template.slice(end, start);
-		end = template.indexOf('}', start) + 1;
-		uri += expandExpression(template.slice(start + 1, end - 1), params);
-	}
-
-	return uri;
-}
-
-module.exports = {
-
-	/**
-  * Expand a URI Template with parameters to form a URI.
-  *
-  * Full implementation (level 4) of rfc6570.
-  * @see https://tools.ietf.org/html/rfc6570
-  *
-  * @param {string} template URI template
-  * @param {Object} [params] params to apply to the template durring expantion
-  * @returns {string} expanded URI
-  */
-	expand: expandTemplate
-
-};
-
-var uriTemplate = /*#__PURE__*/Object.freeze({
-
-});
-
 var styles = createCommonjsModule(function (module) {
 
 
@@ -2138,7 +6399,7 @@ var styles = createCommonjsModule(function (module) {
 /**
  * @class MapboxStyles
  */
-var MapboxStyles = module.exports = makeService$1('MapboxStyles');
+var MapboxStyles = module.exports = make_service('MapboxStyles');
 
 var API_STYLES_LIST = '/styles/v1/{owner}{?access_token}';
 var API_STYLES_CREATE = '/styles/v1/{owner}{?access_token}';
@@ -2501,17 +6762,165 @@ MapboxStyles.prototype.embedStyle = function (styleid, options) {
 };
 });
 
-var invariant$8 = require('../../vendor/invariant');
-var xtend$1 = require('../../vendor/xtend').extend;
-var uriTemplate$1 = require('rest/util/uriTemplate');
-var encodeOverlay = require('../encode_overlay');
-var invariantLocation = require('../invariant_location');
-var makeService$8 = require('../make_service');
+/*
+ * polyline
+ *
+ * https://github.com/mapbox/polyline
+ *
+ * by John Firebaugh, Tom MacWright, and contributors
+ * licensed under BSD 3-clause
+ */
+
+/*
+ * Based off of [the offical Google document](https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
+ *
+ * Some parts from [this implementation](http://facstaff.unca.edu/mcmcclur/GoogleMaps/EncodePolyline/PolylineEncoder.js)
+ * by [Mark McClure](http://facstaff.unca.edu/mcmcclur/)
+ *
+ * @module polyline
+ */
+
+var polyline = {};
+
+function encode$1(coordinate, factor) {
+    coordinate = Math.round(coordinate * factor);
+    coordinate <<= 1;
+    if (coordinate < 0) {
+        coordinate = ~coordinate;
+    }
+    var output = '';
+    while (coordinate >= 0x20) {
+        output += String.fromCharCode((0x20 | coordinate & 0x1f) + 63);
+        coordinate >>= 5;
+    }
+    output += String.fromCharCode(coordinate + 63);
+    return output;
+}
+
+/**
+ * Encodes the given [latitude, longitude] coordinates array.
+ *
+ * @param {Array.<Array.<Number>>} coordinates
+ * @param {Number} precision
+ * @returns {String}
+ */
+polyline.encode = function (coordinates, precision) {
+    if (!coordinates.length) {
+        return '';
+    }
+
+    var factor = Math.pow(10, precision || 5),
+        output = encode$1(coordinates[0][0], factor) + encode$1(coordinates[0][1], factor);
+
+    for (var i = 1; i < coordinates.length; i++) {
+        var a = coordinates[i],
+            b = coordinates[i - 1];
+        output += encode$1(a[0] - b[0], factor);
+        output += encode$1(a[1] - b[1], factor);
+    }
+
+    return output;
+};
+
+function flipped(coords) {
+    var flipped = [];
+    for (var i = 0; i < coords.length; i++) {
+        flipped.push(coords[i].slice().reverse());
+    }
+    return flipped;
+}
+
+/**
+ * Encodes a GeoJSON LineString feature/geometry.
+ *
+ * @param {Object} geojson
+ * @param {Number} precision
+ * @returns {String}
+ */
+polyline.fromGeoJSON = function (geojson, precision) {
+    if (geojson && geojson.type === 'Feature') {
+        geojson = geojson.geometry;
+    }
+    if (!geojson || geojson.type !== 'LineString') {
+        throw new Error('Input must be a GeoJSON LineString');
+    }
+    return polyline.encode(flipped(geojson.coordinates), precision);
+};
+
+var polyline_1 = polyline;
+
+/**
+ * Given a list of markers, encode them for display
+ * @param {Array<Object>} markers a list of markers
+ * @returns {string} encoded markers
+ * @private
+ */
+function encodeMarkers(markers) {
+  return markers.map(function (marker) {
+    invariant_location(marker);
+    var size = marker.size || 'l';
+    var symbol = marker.symbol || 'circle';
+    return 'pin-' + size + '-' + symbol + '(' + marker.longitude + ',' + marker.latitude + ')';
+  }).join(',');
+}
+
+var encodeMarkers_1 = encodeMarkers;
+
+/**
+ * Given a path and style, encode it for display
+ * @param {Object} path an object of a path and style
+ * @param {Object} path.geojson a GeoJSON LineString
+ * @param {Object} [path.style={}] style parameters
+ * @returns {string} encoded path as polyline
+ * @private
+ */
+function encodePath(path) {
+  invariant_1(path.geojson.type === 'LineString', 'path line must be a LineString');
+  var encoded = polyline_1.fromGeoJSON(path.geojson);
+
+  var style = '';
+  if (path.style) {
+    if (path.style.strokewidth !== undefined) style += '-' + path.style.strokewidth;
+    if (path.style.strokecolor !== undefined) style += '+' + path.style.strokecolor;
+  }
+  return 'path' + style + '(' + encoded + ')';
+}
+
+var encodePath_1 = encodePath;
+
+/**
+ * Given a GeoJSON object, encode it for a static map.
+ * @param {Object} geojson a geojson object
+ * @returns {string} encoded geojson as string
+ * @private
+ */
+function encodeGeoJSON(geojson) {
+  var encoded = JSON.stringify(geojson);
+  invariant_1(encoded.length < 4096, 'encoded GeoJSON must be shorter than 4096 characters long');
+  return 'geojson(' + encoded + ')';
+}
+
+var encodeGeoJSON_1 = encodeGeoJSON;
+
+var encode_overlay = {
+	encodeMarkers: encodeMarkers_1,
+	encodePath: encodePath_1,
+	encodeGeoJSON: encodeGeoJSON_1
+};
+
+var _typeof$a = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+
+var xtend$1 = xtend.extend;
+
+
+
+
 
 /**
  * @class MapboxStatic
  */
-var MapboxStatic = makeService$8('MapboxStatic');
+var MapboxStatic = make_service('MapboxStatic');
 
 var API_STATIC = '/styles/v1/{username}/{styleid}/static{+overlay}/{+xyzbp}/{width}x{height}{+retina}{?access_token,attribution,logo,before_layer}';
 var API_STATIC_CLASSIC = '/v4/{mapid}{+overlay}/{+xyz}/{width}x{height}{+retina}{.format}{?access_token}';
@@ -2557,12 +6966,12 @@ var API_STATIC_CLASSIC = '/v4/{mapid}{+overlay}/{+xyz}/{width}x{height}{+retina}
  * // url = https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/pin-l-circle(151.22,-33.87)/151.22,-33.87,11/600x400?access_token=ACCESS_TOKEN&before_layer=housenum-label
  */
 MapboxStatic.prototype.getStaticURL = function (username, styleid, width, height, position, options) {
-  invariant$8(typeof username === 'string', 'username option required and must be a string');
-  invariant$8(typeof styleid === 'string', 'styleid option required and must be a string');
-  invariant$8(typeof width === 'number', 'width option required and must be a number');
-  invariant$8(typeof height === 'number', 'height option required and must be a number');
+  invariant_1(typeof username === 'string', 'username option required and must be a string');
+  invariant_1(typeof styleid === 'string', 'styleid option required and must be a string');
+  invariant_1(typeof width === 'number', 'width option required and must be a number');
+  invariant_1(typeof height === 'number', 'height option required and must be a number');
 
-  var defaults$$1 = {
+  var defaults = {
     retina: ''
   };
 
@@ -2571,7 +6980,7 @@ MapboxStatic.prototype.getStaticURL = function (username, styleid, width, height
   if (position === 'auto') {
     xyzbp = 'auto';
   } else {
-    invariantLocation(position);
+    invariant_location(position);
     xyzbp = position.longitude + ',' + position.latitude + ',' + position.zoom;
     if ('pitch' in position) {
       xyzbp += ',' + (position.bearing || 0) + ',' + position.pitch;
@@ -2583,37 +6992,37 @@ MapboxStatic.prototype.getStaticURL = function (username, styleid, width, height
   var userOptions = {};
 
   if (options) {
-    invariant$8((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+    invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$a(options)) === 'object', 'options must be an object');
     if (options.format) {
-      invariant$8(typeof options.format === 'string', 'format must be a string');
+      invariant_1(typeof options.format === 'string', 'format must be a string');
       userOptions.format = options.format;
     }
     if (options.retina) {
-      invariant$8(typeof options.retina === 'boolean', 'retina must be a boolean');
+      invariant_1(typeof options.retina === 'boolean', 'retina must be a boolean');
       userOptions.retina = options.retina;
     }
     if (options.markers) {
-      userOptions.overlay = '/' + encodeOverlay.encodeMarkers(options.markers);
+      userOptions.overlay = '/' + encode_overlay.encodeMarkers(options.markers);
     } else if (options.geojson) {
-      userOptions.overlay = '/' + encodeOverlay.encodeGeoJSON(options.geojson);
+      userOptions.overlay = '/' + encode_overlay.encodeGeoJSON(options.geojson);
     } else if (options.path) {
-      userOptions.overlay = '/' + encodeOverlay.encodePath(options.path);
+      userOptions.overlay = '/' + encode_overlay.encodePath(options.path);
     }
     if ('attribution' in options) {
-      invariant$8(typeof options.attribution === 'boolean', 'attribution must be a boolean');
+      invariant_1(typeof options.attribution === 'boolean', 'attribution must be a boolean');
       userOptions.attribution = options.attribution;
     }
     if ('logo' in options) {
-      invariant$8(typeof options.logo === 'boolean', 'logo must be a boolean');
+      invariant_1(typeof options.logo === 'boolean', 'logo must be a boolean');
       userOptions.logo = options.logo;
     }
     if (options.before_layer) {
-      invariant$8(typeof options.before_layer === 'string', 'before_layer must be a string');
+      invariant_1(typeof options.before_layer === 'string', 'before_layer must be a string');
       userOptions.before_layer = options.before_layer;
     }
   }
 
-  var params = xtend$1(defaults$$1, userOptions, {
+  var params = xtend$1(defaults, userOptions, {
     username: username,
     styleid: styleid,
     width: width,
@@ -2626,7 +7035,7 @@ MapboxStatic.prototype.getStaticURL = function (username, styleid, width, height
     params.retina = '@2x';
   }
 
-  return this.endpoint + uriTemplate$1.expand(API_STATIC, params);
+  return this.endpoint + uriTemplate.expand(API_STATIC, params);
 };
 
 /**
@@ -2656,11 +7065,11 @@ MapboxStatic.prototype.getStaticURL = function (username, styleid, width, height
  * var mapboxClient = new MapboxClient('ACCESSTOKEN');
  */
 MapboxStatic.prototype.getStaticClassicURL = function (mapid, width, height, position, options) {
-  invariant$8(typeof mapid === 'string', 'mapid option required and must be a string');
-  invariant$8(typeof width === 'number', 'width option required and must be a number');
-  invariant$8(typeof height === 'number', 'height option required and must be a number');
+  invariant_1(typeof mapid === 'string', 'mapid option required and must be a string');
+  invariant_1(typeof width === 'number', 'width option required and must be a number');
+  invariant_1(typeof height === 'number', 'height option required and must be a number');
 
-  var defaults$$1 = {
+  var defaults = {
     format: 'png',
     retina: ''
   };
@@ -2670,32 +7079,32 @@ MapboxStatic.prototype.getStaticClassicURL = function (mapid, width, height, pos
   if (position === 'auto') {
     xyz = 'auto';
   } else {
-    invariantLocation(position);
+    invariant_location(position);
     xyz = position.longitude + ',' + position.latitude + ',' + position.zoom;
   }
 
   var userOptions = {};
 
   if (options) {
-    invariant$8((typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object', 'options must be an object');
+    invariant_1((typeof options === 'undefined' ? 'undefined' : _typeof$a(options)) === 'object', 'options must be an object');
     if (options.format) {
-      invariant$8(typeof options.format === 'string', 'format must be a string');
+      invariant_1(typeof options.format === 'string', 'format must be a string');
       userOptions.format = options.format;
     }
     if (options.retina) {
-      invariant$8(typeof options.retina === 'boolean', 'retina must be a boolean');
+      invariant_1(typeof options.retina === 'boolean', 'retina must be a boolean');
       userOptions.retina = options.retina;
     }
     if (options.markers) {
-      userOptions.overlay = '/' + encodeOverlay.encodeMarkers(options.markers);
+      userOptions.overlay = '/' + encode_overlay.encodeMarkers(options.markers);
     } else if (options.geojson) {
-      userOptions.overlay = '/' + encodeOverlay.encodeGeoJSON(options.geojson);
+      userOptions.overlay = '/' + encode_overlay.encodeGeoJSON(options.geojson);
     } else if (options.path) {
-      userOptions.overlay = '/' + encodeOverlay.encodePath(options.path);
+      userOptions.overlay = '/' + encode_overlay.encodePath(options.path);
     }
   }
 
-  var params = xtend$1(defaults$$1, userOptions, {
+  var params = xtend$1(defaults, userOptions, {
     mapid: mapid,
     width: width,
     xyz: xyz,
@@ -2707,22 +7116,22 @@ MapboxStatic.prototype.getStaticClassicURL = function (mapid, width, height, pos
     params.retina = '@2x';
   }
 
-  return this.endpoint + uriTemplate$1.expand(API_STATIC_CLASSIC, params);
+  return this.endpoint + uriTemplate.expand(API_STATIC_CLASSIC, params);
 };
 
-module.exports = MapboxStatic;
+var _static = MapboxStatic;
 
-var _static = /*#__PURE__*/Object.freeze({
+var tilesets = createCommonjsModule(function (module) {
 
-});
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var invariant$9 = require('../../vendor/invariant');
-var makeService$9 = require('../make_service');
+
+
 
 /**
  * @class MapboxTilesets
  */
-var MapboxTilesets = module.exports = makeService$9('MapboxTilesets');
+var MapboxTilesets = module.exports = make_service('MapboxTilesets');
 
 var API_TILESETS_TILEQUERY = '/v4/{mapid}/tilequery/{longitude},{latitude}.json{?access_token,radius,limit}';
 var API_TILESETS_LIST = '/tilesets/v1/{owner}{?access_token,limit}';
@@ -2745,10 +7154,10 @@ var API_TILESETS_LIST = '/tilesets/v1/{owner}{?access_token,limit}';
  * });
  */
 MapboxTilesets.prototype.tilequery = function (mapid, position, options, callback) {
-  invariant$9(typeof mapid === 'string', 'mapid must be a string');
-  invariant$9((typeof position === 'undefined' ? 'undefined' : _typeof(position)) === 'object', 'position must be an array');
-  invariant$9(position.length == 2, 'position must be an array of length 2');
-  invariant$9(typeof position[0] === 'number' && typeof position[1] === 'number', 'position must be an array of two numbers');
+  invariant_1(typeof mapid === 'string', 'mapid must be a string');
+  invariant_1((typeof position === 'undefined' ? 'undefined' : _typeof(position)) === 'object', 'position must be an array');
+  invariant_1(position.length == 2, 'position must be an array of length 2');
+  invariant_1(typeof position[0] === 'number' && typeof position[1] === 'number', 'position must be an array of two numbers');
 
   if (typeof options === 'function') {
     callback = options;
@@ -2798,9 +7207,6 @@ MapboxTilesets.prototype.listTilesets = function (options, callback) {
     callback: callback
   });
 };
-
-var tilesets = /*#__PURE__*/Object.freeze({
-
 });
 
 var tokens = createCommonjsModule(function (module) {
@@ -2811,7 +7217,7 @@ var tokens = createCommonjsModule(function (module) {
 /**
  * @class MapboxTokens
  */
-var MapboxTokens = module.exports = makeService$1('MapboxTokens');
+var MapboxTokens = module.exports = make_service('MapboxTokens');
 
 var API_TOKENS_LIST = '/tokens/v2/{owner}{?access_token}';
 var API_TOKENS_CREATE = '/tokens/v2/{owner}{?access_token}';
@@ -3051,7 +7457,7 @@ var xtend$2 = xtend.extendMutable;
  * @example
  * var client = new MapboxClient('ACCESSTOKEN');
  */
-var MapboxClient = makeService$1('MapboxClient');
+var MapboxClient = make_service('MapboxClient');
 
 // Combine all client APIs into one API for when people require()
 // the main mapbox-sdk-js library.
@@ -3083,30 +7489,32 @@ function _createClass(Constructor, protoProps, staticProps) {
   return Constructor;
 }
 
+var _typeof3 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 function _typeof2(obj) {
-  if (typeof Symbol === "function" && _typeof(Symbol.iterator) === "symbol") {
+  if (typeof Symbol === "function" && _typeof3(Symbol.iterator) === "symbol") {
     _typeof2 = function _typeof2(obj) {
-      return typeof obj === "undefined" ? "undefined" : _typeof(obj);
+      return typeof obj === "undefined" ? "undefined" : _typeof3(obj);
     };
   } else {
     _typeof2 = function _typeof2(obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof(obj);
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof3(obj);
     };
   }return _typeof2(obj);
 }
 
-function _typeof$1(obj) {
+function _typeof$b(obj) {
   if (typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol") {
-    _typeof$1 = function _typeof$$1(obj) {
+    _typeof$b = function _typeof(obj) {
       return _typeof2(obj);
     };
   } else {
-    _typeof$1 = function _typeof$$1(obj) {
+    _typeof$b = function _typeof(obj) {
       return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : _typeof2(obj);
     };
   }
 
-  return _typeof$1(obj);
+  return _typeof$b(obj);
 }
 
 function _assertThisInitialized(self) {
@@ -4393,13 +8801,25 @@ var WebMercatorViewport = function (_Viewport) {
   return WebMercatorViewport;
 }(Viewport);
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass$1 = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn$1(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits$1(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Geocoder = function (_Component) {
-    inherits(Geocoder, _Component);
+    _inherits$1(Geocoder, _Component);
 
     function Geocoder(props) {
-        classCallCheck(this, Geocoder);
+        _classCallCheck$1(this, Geocoder);
 
-        var _this = possibleConstructorReturn(this, (Geocoder.__proto__ || Object.getPrototypeOf(Geocoder)).call(this));
+        var _this = _possibleConstructorReturn$1(this, (Geocoder.__proto__ || Object.getPrototypeOf(Geocoder)).call(this));
 
         _this.debounceTimeout = null;
         _this.state = {
@@ -4425,7 +8845,7 @@ var Geocoder = function (_Component) {
                 if (params.limit > 0 && !localOnly) {
                     _this.client.geocodeForward(queryString, params).then(function (res) {
                         _this.setState({
-                            results: [].concat(toConsumableArray(localResults), toConsumableArray(res.entity.features))
+                            results: [].concat(_toConsumableArray(localResults), _toConsumableArray(res.entity.features))
                         });
                     });
                 } else {
@@ -4486,7 +8906,7 @@ var Geocoder = function (_Component) {
         return _this;
     }
 
-    createClass(Geocoder, [{
+    _createClass$1(Geocoder, [{
         key: 'render',
         value: function render() {
             var _this2 = this;
@@ -4527,6 +8947,7 @@ var Geocoder = function (_Component) {
             );
         }
     }]);
+
     return Geocoder;
 }(Component);
 
